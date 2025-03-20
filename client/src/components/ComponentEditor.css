@@ -1,0 +1,9 @@
+/* src/components/ComponentEditor.css */
+.component-editor {
+  background-color: white;
+  height: 100%;
+  overflow-y: auto;
+}
+
+/* Most styles are shared with ContentTypeEditor and defined in the editor-css file */
+/* This file exists to satisfy the import in ComponentEditor.js */
