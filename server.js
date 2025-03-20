@@ -1,8 +1,8 @@
 // server.js
-const express = require('express');
-const axios = require('axios');
-const path = require('path');
-const cors = require('cors');
+const express = require("express");
+const axios = require("axios");
+const path = require("path");
+const cors = require("cors");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -10,143 +10,202 @@ const PORT = process.env.PORT || 3001;
 // Middleware
 app.use(express.json());
 app.use(cors());
-app.use(express.static(path.join(__dirname, 'client/build')));
+app.use(express.static(path.join(__dirname, "client/build")));
 
 // API proxy for Bloomreach
-app.post('/api/execute', async (req, res) => {
+app.post("/api/execute", async (req, res) => {
   try {
-    const { brxHost, authToken, section, operation, resourceId, resourceData, contentTypeMode, channelId, componentGroup } = req.body;
+    const {
+      brxHost,
+      authToken,
+      section,
+      operation,
+      resourceId,
+      resourceData,
+      contentTypeMode,
+      channelId,
+      componentGroup,
+    } = req.body;
 
     // Validate required fields
     if (!brxHost || !authToken) {
-      return res.status(400).json({ success: false, error: 'Missing authentication details' });
+      return res
+        .status(400)
+        .json({ success: false, error: "Missing authentication details" });
     }
 
     // Construct API URL based on section and operation
     let apiUrl;
-    let method = 'GET';
+    let method = "GET";
     let data = null;
     let headers = {
-      'Content-Type': 'application/json',
-      'x-auth-token': authToken
+      "Content-Type": "application/json",
+      "x-auth-token": authToken,
     };
 
     // Handle Content Type operations
-    if (section === 'contentTypes') {
+    if (section === "contentTypes") {
       // Base URL depends on mode (core or development)
-      const baseUrl = `${brxHost}/management/${contentTypeMode === 'development' ? 'projects' : 'content-types'}/v1`;
-      
+      const baseUrl = `${brxHost}/management/contenttypes/v1/${contentTypeMode}`;
+
       switch (operation) {
-        case 'get':
+        case "get":
           apiUrl = baseUrl;
           break;
-        case 'getById':
-          if (!resourceId) return res.status(400).json({ success: false, error: 'Resource ID is required' });
+        case "getById":
+          if (!resourceId)
+            return res
+              .status(400)
+              .json({ success: false, error: "Resource ID is required" });
           apiUrl = `${baseUrl}/${resourceId}`;
           break;
-        case 'create':
+        case "create":
           apiUrl = baseUrl;
-          method = 'POST';
+          method = "POST";
           data = resourceData;
           break;
-        case 'update':
-          if (!resourceId) return res.status(400).json({ success: false, error: 'Resource ID is required' });
+        case "update":
+          if (!resourceId)
+            return res
+              .status(400)
+              .json({ success: false, error: "Resource ID is required" });
           if (resourceData.resourceVersion) {
-            headers['X-Resource-Version'] = resourceData.resourceVersion;
+            headers["X-Resource-Version"] = resourceData.resourceVersion;
             delete resourceData.resourceVersion;
           }
           apiUrl = `${baseUrl}/${resourceId}`;
-          method = 'PUT';
+          method = "PUT";
           data = resourceData;
           break;
-        case 'delete':
-          if (!resourceId) return res.status(400).json({ success: false, error: 'Resource ID is required' });
+        case "delete":
+          if (!resourceId)
+            return res
+              .status(400)
+              .json({ success: false, error: "Resource ID is required" });
           apiUrl = `${baseUrl}/${resourceId}`;
-          method = 'DELETE';
+          method = "DELETE";
           break;
         default:
-          return res.status(400).json({ success: false, error: 'Invalid operation' });
+          return res
+            .status(400)
+            .json({ success: false, error: "Invalid operation" });
       }
-    } 
+    }
     // Handle Component operations
-    else if (section === 'components') {
+    else if (section === "components") {
       if (!channelId) {
-        return res.status(400).json({ success: false, error: 'Channel ID is required' });
+        return res
+          .status(400)
+          .json({ success: false, error: "Channel ID is required" });
       }
-      
+
       const baseUrl = `${brxHost}/management/site/v1/channels/${channelId}`;
-      
+
       switch (operation) {
-        case 'getGroups':
+        case "getGroups":
           apiUrl = `${baseUrl}/component_groups`;
           break;
-        case 'getGroup':
-          if (!componentGroup) return res.status(400).json({ success: false, error: 'Component group is required' });
+        case "getGroup":
+          if (!componentGroup)
+            return res
+              .status(400)
+              .json({ success: false, error: "Component group is required" });
           apiUrl = `${baseUrl}/component_groups/${componentGroup}`;
           break;
-        case 'getComponents':
-          if (!componentGroup) return res.status(400).json({ success: false, error: 'Component group is required' });
+        case "getComponents":
+          if (!componentGroup)
+            return res
+              .status(400)
+              .json({ success: false, error: "Component group is required" });
           apiUrl = `${baseUrl}/component_groups/${componentGroup}/components`;
           break;
-        case 'getComponent':
+        case "getComponent":
           if (!componentGroup || !resourceId) {
-            return res.status(400).json({ success: false, error: 'Component group and component name are required' });
+            return res.status(400).json({
+              success: false,
+              error: "Component group and component name are required",
+            });
           }
           apiUrl = `${baseUrl}/component_groups/${componentGroup}/components/${resourceId}`;
           break;
-        case 'createGroup':
-          if (!componentGroup) return res.status(400).json({ success: false, error: 'Component group is required' });
+        case "createGroup":
+          if (!componentGroup)
+            return res
+              .status(400)
+              .json({ success: false, error: "Component group is required" });
           apiUrl = `${baseUrl}/component_groups/${componentGroup}`;
-          method = 'PUT';
-          data = { name: componentGroup, hidden: false, system: false, ...resourceData };
+          method = "PUT";
+          data = {
+            name: componentGroup,
+            hidden: false,
+            system: false,
+            ...resourceData,
+          };
           break;
-        case 'updateGroup':
-          if (!componentGroup) return res.status(400).json({ success: false, error: 'Component group is required' });
+        case "updateGroup":
+          if (!componentGroup)
+            return res
+              .status(400)
+              .json({ success: false, error: "Component group is required" });
           if (resourceData.resourceVersion) {
-            headers['X-Resource-Version'] = resourceData.resourceVersion;
+            headers["X-Resource-Version"] = resourceData.resourceVersion;
             delete resourceData.resourceVersion;
           }
           apiUrl = `${baseUrl}/component_groups/${componentGroup}`;
-          method = 'PUT';
+          method = "PUT";
           data = { name: componentGroup, ...resourceData };
           break;
-        case 'deleteGroup':
-          if (!componentGroup) return res.status(400).json({ success: false, error: 'Component group is required' });
+        case "deleteGroup":
+          if (!componentGroup)
+            return res
+              .status(400)
+              .json({ success: false, error: "Component group is required" });
           apiUrl = `${baseUrl}/component_groups/${componentGroup}`;
-          method = 'DELETE';
+          method = "DELETE";
           break;
-        case 'createComponent':
+        case "createComponent":
           if (!componentGroup || !resourceId) {
-            return res.status(400).json({ success: false, error: 'Component group and component name are required' });
+            return res.status(400).json({
+              success: false,
+              error: "Component group and component name are required",
+            });
           }
           apiUrl = `${baseUrl}/component_groups/${componentGroup}/components/${resourceId}`;
-          method = 'PUT';
+          method = "PUT";
           data = resourceData;
           break;
-        case 'updateComponent':
+        case "updateComponent":
           if (!componentGroup || !resourceId) {
-            return res.status(400).json({ success: false, error: 'Component group and component name are required' });
+            return res.status(400).json({
+              success: false,
+              error: "Component group and component name are required",
+            });
           }
           if (resourceData.resourceVersion) {
-            headers['X-Resource-Version'] = resourceData.resourceVersion;
+            headers["X-Resource-Version"] = resourceData.resourceVersion;
             delete resourceData.resourceVersion;
           }
           apiUrl = `${baseUrl}/component_groups/${componentGroup}/components/${resourceId}`;
-          method = 'PUT';
+          method = "PUT";
           data = resourceData;
           break;
-        case 'deleteComponent':
+        case "deleteComponent":
           if (!componentGroup || !resourceId) {
-            return res.status(400).json({ success: false, error: 'Component group and component name are required' });
+            return res.status(400).json({
+              success: false,
+              error: "Component group and component name are required",
+            });
           }
           apiUrl = `${baseUrl}/component_groups/${componentGroup}/components/${resourceId}`;
-          method = 'DELETE';
+          method = "DELETE";
           break;
         default:
-          return res.status(400).json({ success: false, error: 'Invalid operation' });
+          return res
+            .status(400)
+            .json({ success: false, error: "Invalid operation" });
       }
     } else {
-      return res.status(400).json({ success: false, error: 'Invalid section' });
+      return res.status(400).json({ success: false, error: "Invalid section" });
     }
 
     // Make the request to Bloomreach API
@@ -155,33 +214,33 @@ app.post('/api/execute', async (req, res) => {
       method,
       url: apiUrl,
       headers,
-      data
+      data,
     });
 
     // Return the response data and resource version if available
     const result = {
       success: true,
       data: response.data,
-      resourceVersion: response.headers['x-resource-version']
+      resourceVersion: response.headers["x-resource-version"],
     };
 
     res.json(result);
   } catch (error) {
-    console.error('API Error:', error.response?.data || error.message);
-    
+    console.error("API Error:", error.response?.data || error.message);
+
     // Format and return error response
     res.status(error.response?.status || 500).json({
       success: false,
       error: error.response?.data?.message || error.message,
-      details: error.response?.data
+      details: error.response?.data,
     });
   }
 });
 
 // Serve frontend in production
-if (process.env.NODE_ENV === 'production') {
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
+if (process.env.NODE_ENV === "production") {
+  app.get("*", (req, res) => {
+    res.sendFile(path.join(__dirname, "client/build", "index.html"));
   });
 }
 

@@ -1,4 +1,4 @@
-# Bloomreach Management App
+# Bloomreach (Light) Management App
 
 A web application for managing Bloomreach CMS content types and components through a visual interface.
 
@@ -26,12 +26,14 @@ A web application for managing Bloomreach CMS content types and components throu
 ### Setup
 
 1. Clone the repository
+
 ```bash
-git clone https://github.com/yourusername/bloomreach-management-app.git
-cd bloomreach-management-app
+git clone https://github.com/alexferrari88/bloomreach-light-management-app.git
+cd bloomreach-light-management-app
 ```
 
 2. Install dependencies
+
 ```bash
 npm install
 cd client
@@ -40,6 +42,7 @@ cd ..
 ```
 
 3. Start the development server
+
 ```bash
 npm run dev
 ```
