@@ -1,10 +1,17 @@
 // src/components/ChangeHistory.js
 // This component displays the history of changes made during a session
-import React from 'react';
-import { FiDownload, FiTrash2 } from 'react-icons/fi';
+import React, { useState } from 'react';
+import { FiDownload, FiTrash2, FiInfo } from 'react-icons/fi';
 import './ChangeHistory.css';
+import ChangeDetail from './ChangeDetail';
 
 const ChangeHistory = ({ changes, onClear, onExport }) => {
+  const [selectedChange, setSelectedChange] = useState(null);
+  
+  const handleChangeClick = (change) => {
+    setSelectedChange(change);
+  };
+  
   if (changes.length === 0) {
     return (
       <div className="change-history">
@@ -41,7 +48,11 @@ const ChangeHistory = ({ changes, onClear, onExport }) => {
       </div>
       <div className="history-list">
         {changes.map((change, index) => (
-          <div key={index} className="history-item">
+          <div 
+            key={index} 
+            className={`history-item ${change.entityData || change.previousData ? 'has-details' : ''}`}
+            onClick={() => change.entityData || change.previousData ? handleChangeClick(change) : null}
+          >
             <div className="change-time">{change.timestamp}</div>
             <div className="change-details">
               <div className={`change-type ${change.action.toLowerCase()}`}>
@@ -50,10 +61,22 @@ const ChangeHistory = ({ changes, onClear, onExport }) => {
               <div className="change-entity">
                 {change.entityType}: <strong>{change.entityName}</strong>
               </div>
+              {(change.entityData || change.previousData) && (
+                <div className="details-indicator">
+                  <FiInfo size={14} />
+                </div>
+              )}
             </div>
           </div>
         ))}
       </div>
+      
+      {selectedChange && (
+        <ChangeDetail 
+          change={selectedChange} 
+          onClose={() => setSelectedChange(null)} 
+        />
+      )}
     </div>
   );
 };
