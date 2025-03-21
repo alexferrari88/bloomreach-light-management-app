@@ -1,14 +1,14 @@
-// src/components/ChangeHistory.js
-// This component displays the history of changes made during a session
+// src/components/ChangeHistory.tsx
 import React, { useState } from 'react';
 import { FiDownload, FiTrash2, FiInfo } from 'react-icons/fi';
 import './ChangeHistory.css';
 import ChangeDetail from './ChangeDetail';
+import { Change, ChangeHistoryProps } from '../types';
 
-const ChangeHistory = ({ changes, onClear, onExport }) => {
-  const [selectedChange, setSelectedChange] = useState(null);
+const ChangeHistory: React.FC<ChangeHistoryProps> = ({ changes, onClear, onExport }) => {
+  const [selectedChange, setSelectedChange] = useState<Change | null>(null);
   
-  const handleChangeClick = (change) => {
+  const handleChangeClick = (change: Change) => {
     setSelectedChange(change);
   };
   

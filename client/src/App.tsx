@@ -1,6 +1,6 @@
-// src/App.js
+// src/App.tsx
 import axios from "axios";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./App.css";
@@ -8,32 +8,41 @@ import AuthForm from "./components/AuthForm";
 import ComponentManager from "./components/ComponentManager";
 import ContentTypeManager from "./components/ContentTypeManager";
 import ChangeHistory from "./components/ChangeHistory";
+import { 
+  ApiRequest, 
+  ApiResponse, 
+  Auth, 
+  Change 
+} from "./types";
 
 function App() {
   // State for authentication
-  const [auth, setAuth] = useState({
+  const [auth, setAuth] = useState<Auth>({
     brxHost: "",
     authToken: "",
   });
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
   // State for app navigation
-  const [activeSection, setActiveSection] = useState("contentTypes");
+  const [activeSection, setActiveSection] = useState<"contentTypes" | "components">("contentTypes");
   
   // State for change history
-  const [changes, setChanges] = useState([]);
+  const [changes, setChanges] = useState<Change[]>([]);
 
   // Load auth from local storage
   useEffect(() => {
-    const savedAuth = JSON.parse(localStorage.getItem("brxAuth"));
-    if (savedAuth && savedAuth.brxHost && savedAuth.authToken) {
-      setAuth(savedAuth);
-      setIsAuthenticated(true);
+    const savedAuth = localStorage.getItem("brxAuth");
+    if (savedAuth) {
+      const parsedAuth: Auth = JSON.parse(savedAuth);
+      if (parsedAuth.brxHost && parsedAuth.authToken) {
+        setAuth(parsedAuth);
+        setIsAuthenticated(true);
+      }
     }
   }, []);
 
   // Handle login
-  const handleLogin = (credentials) => {
+  const handleLogin = (credentials: Auth) => {
     localStorage.setItem("brxAuth", JSON.stringify(credentials));
     setAuth(credentials);
     setIsAuthenticated(true);
@@ -50,13 +59,19 @@ function App() {
   };
 
   // Switch between content types and components
-  const switchSection = (section) => {
+  const switchSection = (section: "contentTypes" | "components") => {
     setActiveSection(section);
   };
   
   // Record a change to the history with detailed information
-  const recordChange = (action, entityType, entityName, entityData = null, previousData = null) => {
-    const change = {
+  const recordChange = (
+    action: "CREATE" | "UPDATE" | "DELETE", 
+    entityType: string, 
+    entityName: string, 
+    entityData: any = null, 
+    previousData: any = null
+  ) => {
+    const change: Change = {
       action,
       entityType,
       entityName,
@@ -91,7 +106,7 @@ function App() {
   };
 
   // API request handler with detailed change tracking
-  const makeApiRequest = async (params) => {
+  const makeApiRequest = async (params: ApiRequest): Promise<ApiResponse> => {
     try {
       // For update and delete operations, fetch the current state first
       let previousData = null;
@@ -99,7 +114,7 @@ function App() {
       if (['update', 'updateGroup', 'updateComponent', 'delete', 'deleteGroup', 'deleteComponent'].includes(params.operation)) {
         try {
           // Determine the get operation based on the current operation
-          let getOperation;
+          let getOperation: string;
           if (params.operation.includes('Group')) {
             getOperation = 'getGroup';
           } else if (params.operation.includes('Component') && !params.operation.includes('Group')) {
@@ -109,7 +124,7 @@ function App() {
           }
           
           // Make API request to get current state
-          const getResponse = await axios.post("/api/execute", {
+          const getResponse = await axios.post<ApiResponse>("/api/execute", {
             ...params,
             operation: getOperation,
             brxHost: auth.brxHost,
@@ -127,7 +142,7 @@ function App() {
       }
       
       // Now make the actual API request
-      const response = await axios.post("/api/execute", {
+      const response = await axios.post<ApiResponse>("/api/execute", {
         ...params,
         brxHost: auth.brxHost,
         authToken: auth.authToken,
@@ -136,12 +151,12 @@ function App() {
       // Record the change if it's a mutation operation
       if (['create', 'update', 'delete', 'createGroup', 'updateGroup', 'deleteGroup',
            'createComponent', 'updateComponent', 'deleteComponent'].includes(params.operation)) {
-        let action = params.operation;
-        if (action.startsWith('create')) action = 'CREATE';
-        else if (action.startsWith('update')) action = 'UPDATE';
-        else if (action.startsWith('delete')) action = 'DELETE';
+        let action: "CREATE" | "UPDATE" | "DELETE" = "CREATE";
+        if (params.operation.startsWith('create')) action = 'CREATE';
+        else if (params.operation.startsWith('update')) action = 'UPDATE';
+        else if (params.operation.startsWith('delete')) action = 'DELETE';
         
-        let entityType = '';
+        let entityType: string = '';
         if (params.section === 'contentTypes') {
           entityType = 'Content Type';
         } else if (params.operation.includes('Group')) {
@@ -151,7 +166,7 @@ function App() {
         }
         
         // Get entity name
-        let entityName = params.resourceId || '';
+        let entityName: string = params.resourceId || '';
         if (params.operation.includes('Group') && params.componentGroup) {
           entityName = params.componentGroup;
         }
@@ -164,9 +179,9 @@ function App() {
       }
 
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
       const errorMsg =
-        `${error.response?.data?.error}: ${error.response?.data.details}` ||
+        `${error.response?.data?.error}: ${error.response?.data?.details}` ||
         error.message;
       toast.error(`API Error: ${errorMsg}`);
       throw error;

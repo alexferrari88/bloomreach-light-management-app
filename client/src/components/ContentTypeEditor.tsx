@@ -1,11 +1,12 @@
-// src/components/ContentTypeEditor.js
-import React, { useState, useEffect } from 'react';
+// src/components/ContentTypeEditor.tsx
+import React, { useState, useEffect, FormEvent, ChangeEvent } from 'react';
 import { FiPlus, FiEdit2, FiTrash2, FiArrowUp, FiArrowDown, FiSave, FiX } from 'react-icons/fi';
 import './ContentTypeEditor.css';
+import { ContentType, ContentTypeEditorProps, Property } from '../types';
 
-const ContentTypeEditor = ({ contentType, onSave, onCancel, mode }) => {
+const ContentTypeEditor: React.FC<ContentTypeEditorProps> = ({ contentType, onSave, onCancel, mode }) => {
   // State for the content type being edited
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<ContentType>({
     name: '',
     displayName: '',
     description: '',
@@ -14,7 +15,7 @@ const ContentTypeEditor = ({ contentType, onSave, onCancel, mode }) => {
   });
   
   // State for the current property being edited
-  const [currentProperty, setCurrentProperty] = useState({
+  const [currentProperty, setCurrentProperty] = useState<Property>({
     name: '',
     displayName: '',
     type: 'String',
@@ -23,13 +24,13 @@ const ContentTypeEditor = ({ contentType, onSave, onCancel, mode }) => {
   });
   
   // Flag to track if we're editing an existing property
-  const [editingPropertyIndex, setEditingPropertyIndex] = useState(-1);
+  const [editingPropertyIndex, setEditingPropertyIndex] = useState<number>(-1);
   
   // Load content type data if editing an existing one
   useEffect(() => {
     if (contentType) {
       // Transform the content type data to match our form structure
-      const transformedData = {
+      const transformedData: ContentType = {
         name: contentType.name || contentType.id || '',
         displayName: contentType.displayName || '',
         description: contentType.description || '',
@@ -42,7 +43,7 @@ const ContentTypeEditor = ({ contentType, onSave, onCancel, mode }) => {
   }, [contentType]);
   
   // Handle changes to the content type form fields
-  const handleContentTypeChange = (e) => {
+  const handleContentTypeChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -51,8 +52,10 @@ const ContentTypeEditor = ({ contentType, onSave, onCancel, mode }) => {
   };
   
   // Handle changes to the current property being edited
-  const handlePropertyChange = (e) => {
-    const { name, value, type, checked } = e.target;
+  const handlePropertyChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
+    const checked = (e.target as HTMLInputElement).checked;
+    
     setCurrentProperty(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
@@ -103,13 +106,13 @@ const ContentTypeEditor = ({ contentType, onSave, onCancel, mode }) => {
   };
   
   // Edit an existing property
-  const editProperty = (index) => {
+  const editProperty = (index: number) => {
     setCurrentProperty(formData.properties[index]);
     setEditingPropertyIndex(index);
   };
   
   // Delete a property
-  const deleteProperty = (index) => {
+  const deleteProperty = (index: number) => {
     const updatedProperties = [...formData.properties];
     updatedProperties.splice(index, 1);
     
@@ -120,7 +123,7 @@ const ContentTypeEditor = ({ contentType, onSave, onCancel, mode }) => {
   };
   
   // Move a property up in the list
-  const movePropertyUp = (index) => {
+  const movePropertyUp = (index: number) => {
     if (index === 0) return;
     
     const updatedProperties = [...formData.properties];
@@ -135,7 +138,7 @@ const ContentTypeEditor = ({ contentType, onSave, onCancel, mode }) => {
   };
   
   // Move a property down in the list
-  const movePropertyDown = (index) => {
+  const movePropertyDown = (index: number) => {
     if (index === formData.properties.length - 1) return;
     
     const updatedProperties = [...formData.properties];
@@ -162,7 +165,7 @@ const ContentTypeEditor = ({ contentType, onSave, onCancel, mode }) => {
   };
   
   // Submit the form
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     // Basic validation
@@ -172,7 +175,7 @@ const ContentTypeEditor = ({ contentType, onSave, onCancel, mode }) => {
     }
     
     // Format the data for API
-    const apiData = {
+    const apiData: ContentType = {
       ...formData,
       id: formData.name,
       resourceVersion: formData.resourceVersion
@@ -186,7 +189,7 @@ const ContentTypeEditor = ({ contentType, onSave, onCancel, mode }) => {
       <div className="editor-header">
         <h2>{contentType ? 'Edit Content Type' : 'Create Content Type'}</h2>
         <div className="editor-actions">
-          <button className="btn btn-primary" onClick={handleSubmit}>
+          <button className="btn btn-primary" onClick={() => handleSubmit({ preventDefault: () => {} } as any)}>
             <FiSave /> Save
           </button>
           <button className="btn btn-outline" onClick={onCancel}>
@@ -235,7 +238,7 @@ const ContentTypeEditor = ({ contentType, onSave, onCancel, mode }) => {
               value={formData.description}
               onChange={handleContentTypeChange}
               placeholder="Describe the purpose of this content type"
-              rows="3"
+              rows={3}
             />
           </div>
         </div>

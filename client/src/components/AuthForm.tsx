@@ -1,14 +1,15 @@
-// src/components/AuthForm.js
-import React, { useState } from 'react';
+// src/components/AuthForm.tsx
+import React, { useState, ChangeEvent, FormEvent } from 'react';
+import { Auth, AuthFormProps } from '../types';
 import './AuthForm.css';
 
-const AuthForm = ({ onLogin }) => {
-  const [credentials, setCredentials] = useState({
+const AuthForm: React.FC<AuthFormProps> = ({ onLogin }) => {
+  const [credentials, setCredentials] = useState<Auth>({
     brxHost: '',
     authToken: ''
   });
   
-  const handleChange = (e) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setCredentials((prev) => ({
       ...prev,
@@ -16,7 +17,7 @@ const AuthForm = ({ onLogin }) => {
     }));
   };
   
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     // Basic validation

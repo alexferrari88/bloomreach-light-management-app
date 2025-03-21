@@ -1,8 +1,21 @@
-// server.js
-const express = require("express");
-const axios = require("axios");
-const path = require("path");
-const cors = require("cors");
+// server.ts
+import express, { Request, Response } from "express";
+import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
+import path from "path";
+import cors from "cors";
+
+// Define interface for API request
+interface BloomreachApiRequest {
+  brxHost: string;
+  authToken: string;
+  section: string;
+  operation: string;
+  resourceId?: string;
+  resourceData?: any;
+  contentTypeMode?: string;
+  channelId?: string;
+  componentGroup?: string;
+}
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -13,7 +26,7 @@ app.use(cors());
 app.use(express.static(path.join(__dirname, "client/build")));
 
 // API proxy for Bloomreach
-app.post("/api/execute", async (req, res) => {
+app.post("/api/execute", async (req: Request, res: Response) => {
   try {
     const {
       brxHost,
@@ -25,7 +38,7 @@ app.post("/api/execute", async (req, res) => {
       contentTypeMode,
       channelId,
       componentGroup,
-    } = req.body;
+    } = req.body as BloomreachApiRequest;
 
     // Validate required fields
     if (!brxHost || !authToken) {
@@ -35,10 +48,10 @@ app.post("/api/execute", async (req, res) => {
     }
 
     // Construct API URL based on section and operation
-    let apiUrl;
-    let method = "GET";
-    let data = null;
-    let headers = {
+    let apiUrl: string;
+    let method: string = "GET";
+    let data: any = null;
+    let headers: Record<string, string> = {
       "Content-Type": "application/json",
       "x-auth-token": authToken,
     };
@@ -147,7 +160,7 @@ app.post("/api/execute", async (req, res) => {
             return res
               .status(400)
               .json({ success: false, error: "Component group is required" });
-          if (resourceData.resourceVersion) {
+          if (resourceData && resourceData.resourceVersion) {
             headers["X-Resource-Version"] = resourceData.resourceVersion;
             delete resourceData.resourceVersion;
           }
@@ -181,7 +194,7 @@ app.post("/api/execute", async (req, res) => {
               error: "Component group and component name are required",
             });
           }
-          if (resourceData.resourceVersion) {
+          if (resourceData && resourceData.resourceVersion) {
             headers["X-Resource-Version"] = resourceData.resourceVersion;
             delete resourceData.resourceVersion;
           }
@@ -210,12 +223,14 @@ app.post("/api/execute", async (req, res) => {
 
     // Make the request to Bloomreach API
     console.log(`Making ${method} request to ${apiUrl}`);
-    const response = await axios({
-      method,
+    const axiosConfig: AxiosRequestConfig = {
+      method: method as any,
       url: apiUrl,
       headers,
       data,
-    });
+    };
+
+    const response: AxiosResponse = await axios(axiosConfig);
 
     // Return the response data and resource version if available
     const result = {
@@ -225,7 +240,7 @@ app.post("/api/execute", async (req, res) => {
     };
 
     res.json(result);
-  } catch (error) {
+  } catch (error: any) {
     console.error("API Error:", error.response?.data || error.message);
 
     // Format and return error response
@@ -239,7 +254,7 @@ app.post("/api/execute", async (req, res) => {
 
 // Serve frontend in production
 if (process.env.NODE_ENV === "production") {
-  app.get("*", (req, res) => {
+  app.get("*", (req: Request, res: Response) => {
     res.sendFile(path.join(__dirname, "client/build", "index.html"));
   });
 }
@@ -247,3 +262,5 @@ if (process.env.NODE_ENV === "production") {
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+export default app;
