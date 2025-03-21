@@ -1,17 +1,18 @@
-// src/components/ContentTypeManager.js
+// src/components/ContentTypeManager.tsx
 import React, { useState, useEffect } from 'react';
 import { FiPlus, FiEdit2, FiTrash2, FiRefreshCw, FiCopy, FiDownload } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import ContentTypeEditor from './ContentTypeEditor';
 import './ContentTypeManager.css';
+import { ContentType, ContentTypeManagerProps, ApiRequest } from '../types';
 
-const ContentTypeManager = ({ makeApiRequest }) => {
-  const [contentTypes, setContentTypes] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [contentTypeMode, setContentTypeMode] = useState('core'); // 'core' or 'development'
-  const [showEditor, setShowEditor] = useState(false);
-  const [editingContentType, setEditingContentType] = useState(null);
-  const [jsonExport, setJsonExport] = useState(null);
+const ContentTypeManager: React.FC<ContentTypeManagerProps> = ({ makeApiRequest }) => {
+  const [contentTypes, setContentTypes] = useState<ContentType[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [contentTypeMode, setContentTypeMode] = useState<'core' | 'development'>('core');
+  const [showEditor, setShowEditor] = useState<boolean>(false);
+  const [editingContentType, setEditingContentType] = useState<ContentType | null>(null);
+  const [jsonExport, setJsonExport] = useState<ContentType | null>(null);
 
   // Fetch content types when mode changes
   useEffect(() => {
@@ -23,13 +24,17 @@ const ContentTypeManager = ({ makeApiRequest }) => {
   const fetchContentTypes = async () => {
     setLoading(true);
     try {
-      const result = await makeApiRequest({
+      const params: ApiRequest = {
         section: 'contentTypes',
         operation: 'get',
-        contentTypeMode
-      });
+        contentTypeMode,
+        brxHost: '',
+        authToken: ''
+      };
       
-      if (result.success) {
+      const result = await makeApiRequest(params);
+      
+      if (result.success && result.data) {
         setContentTypes(result.data);
       }
     } catch (error) {
@@ -40,19 +45,23 @@ const ContentTypeManager = ({ makeApiRequest }) => {
   };
 
   // Get content type details for editing
-  const getContentTypeDetails = async (id) => {
+  const getContentTypeDetails = async (id: string) => {
     setLoading(true);
     try {
-      const result = await makeApiRequest({
+      const params: ApiRequest = {
         section: 'contentTypes',
         operation: 'getById',
         contentTypeMode,
-        resourceId: id
-      });
+        resourceId: id,
+        brxHost: '',
+        authToken: ''
+      };
       
-      if (result.success) {
+      const result = await makeApiRequest(params);
+      
+      if (result.success && result.data) {
         // Include resource version for PUT operations
-        const contentType = {
+        const contentType: ContentType = {
           ...result.data,
           resourceVersion: result.resourceVersion
         };
@@ -69,19 +78,23 @@ const ContentTypeManager = ({ makeApiRequest }) => {
   };
 
   // Delete a content type
-  const deleteContentType = async (id) => {
+  const deleteContentType = async (id: string) => {
     if (!window.confirm(`Are you sure you want to delete content type ${id}?`)) {
       return;
     }
     
     setLoading(true);
     try {
-      const result = await makeApiRequest({
+      const params: ApiRequest = {
         section: 'contentTypes',
         operation: 'delete',
         contentTypeMode,
-        resourceId: id
-      });
+        resourceId: id,
+        brxHost: '',
+        authToken: ''
+      };
+      
+      const result = await makeApiRequest(params);
       
       if (result.success) {
         toast.success(`Content type ${id} deleted successfully`);
@@ -102,20 +115,24 @@ const ContentTypeManager = ({ makeApiRequest }) => {
   };
 
   // Handle saving content type (create or update)
-  const handleSaveContentType = async (contentType) => {
+  const handleSaveContentType = async (contentType: ContentType) => {
     setLoading(true);
     
     try {
       const operation = contentType.resourceVersion ? 'update' : 'create';
       const resourceId = contentType.id || contentType.name;
       
-      const result = await makeApiRequest({
+      const params: ApiRequest = {
         section: 'contentTypes',
         operation,
         contentTypeMode,
         resourceId,
-        resourceData: contentType
-      });
+        resourceData: contentType,
+        brxHost: '',
+        authToken: ''
+      };
+      
+      const result = await makeApiRequest(params);
       
       if (result.success) {
         toast.success(`Content type ${operation === 'create' ? 'created' : 'updated'} successfully`);
@@ -131,12 +148,14 @@ const ContentTypeManager = ({ makeApiRequest }) => {
   };
 
   // Export content type to JSON
-  const exportContentType = (contentType) => {
+  const exportContentType = (contentType: ContentType) => {
     setJsonExport(contentType);
   };
 
   // Copy JSON to clipboard
   const copyToClipboard = () => {
+    if (!jsonExport) return;
+    
     navigator.clipboard.writeText(JSON.stringify(jsonExport, null, 2))
       .then(() => toast.success('Copied to clipboard'))
       .catch(() => toast.error('Failed to copy to clipboard'));
@@ -144,6 +163,8 @@ const ContentTypeManager = ({ makeApiRequest }) => {
 
   // Download JSON file
   const downloadJson = () => {
+    if (!jsonExport) return;
+    
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(jsonExport, null, 2));
     const downloadAnchorNode = document.createElement('a');
     downloadAnchorNode.setAttribute("href", dataStr);

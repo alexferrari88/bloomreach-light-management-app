@@ -1,12 +1,15 @@
-// src/components/ChangeDetail.js
+// src/components/ChangeDetail.tsx
 import React from 'react';
 import { FiX } from 'react-icons/fi';
 import './ChangeDetail.css';
+import { ChangeDetailProps } from '../types';
 
-const ChangeDetail = ({ change, onClose }) => {
+const ChangeDetail: React.FC<ChangeDetailProps> = ({ change, onClose }) => {
   if (!change) return null;
   
-  const renderDiff = (prevData, newData) => {
+  type ObjectType = Record<string, any>;
+
+  const renderDiff = (prevData: ObjectType | null, newData: ObjectType | null) => {
     // Helper function to identify changes between objects
     if (!prevData || !newData) return null;
     
@@ -59,7 +62,14 @@ const ChangeDetail = ({ change, onClose }) => {
     );
   };
   
-  const renderPropertyChanges = (prevProperties, newProperties) => {
+  interface PropertyType {
+    name: string;
+    type?: string;
+    valueType?: string;
+    displayName?: string;
+  }
+
+  const renderPropertyChanges = (prevProperties: PropertyType[] | null | undefined, newProperties: PropertyType[] | null | undefined) => {
     if (!prevProperties || !newProperties) return null;
     
     // Identify added, modified, and removed properties
@@ -97,15 +107,17 @@ const ChangeDetail = ({ change, onClose }) => {
             <ul>
               {modified.map(prop => {
                 const prevProp = prevProperties.find(p => p.name === prop.name);
+                if (!prevProp) return null;
+                
                 return (
                   <li key={prop.name}>
                     <strong>{prop.name}</strong>
                     <div className="property-diff">
-                      {Object.keys(prop).filter(key => key !== 'name' && JSON.stringify(prop[key]) !== JSON.stringify(prevProp[key])).map(key => (
+                      {Object.keys(prop).filter(key => key !== 'name' && JSON.stringify(prop[key as keyof PropertyType]) !== JSON.stringify(prevProp[key as keyof PropertyType])).map(key => (
                         <div key={key} className="diff-item">
                           <span className="diff-key">{key}</span>: 
-                          <span className="diff-old">{JSON.stringify(prevProp[key])}</span> → 
-                          <span className="diff-new">{JSON.stringify(prop[key])}</span>
+                          <span className="diff-old">{JSON.stringify(prevProp[key as keyof PropertyType])}</span> → 
+                          <span className="diff-new">{JSON.stringify(prop[key as keyof PropertyType])}</span>
                         </div>
                       ))}
                     </div>

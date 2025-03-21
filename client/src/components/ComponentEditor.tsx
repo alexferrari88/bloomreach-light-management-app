@@ -1,11 +1,18 @@
-// src/components/ComponentEditor.js
-import React, { useState, useEffect } from 'react';
+// src/components/ComponentEditor.tsx
+import React, { useState, useEffect, ChangeEvent } from 'react';
 import { FiPlus, FiEdit2, FiTrash2, FiSave, FiX } from 'react-icons/fi';
 import './ComponentEditor.css';
+import { 
+  Component, 
+  ComponentEditorProps, 
+  Parameter, 
+  ParameterConfig, 
+  FieldGroup 
+} from '../types';
 
-const ComponentEditor = ({ component, onSave, onCancel, groupName }) => {
+const ComponentEditor: React.FC<ComponentEditorProps> = ({ component, onSave, onCancel, groupName }) => {
   // State for the component being edited
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<Component>({
     id: '',
     extends: 'base/component',
     hidden: false,
@@ -21,7 +28,7 @@ const ComponentEditor = ({ component, onSave, onCancel, groupName }) => {
   });
   
   // State for the current parameter being edited
-  const [currentParameter, setCurrentParameter] = useState({
+  const [currentParameter, setCurrentParameter] = useState<Parameter>({
     name: '',
     valueType: 'string',
     required: false,
@@ -34,16 +41,16 @@ const ComponentEditor = ({ component, onSave, onCancel, groupName }) => {
   });
 
   // State for the current field group being edited
-  const [currentFieldGroup, setCurrentFieldGroup] = useState({
+  const [currentFieldGroup, setCurrentFieldGroup] = useState<FieldGroup>({
     name: '',
     displayName: '',
     parameters: []
   });
   
   // Flags to track editing states
-  const [editingParameterIndex, setEditingParameterIndex] = useState(-1);
-  const [editingFieldGroupIndex, setEditingFieldGroupIndex] = useState(-1);
-  const [configType, setConfigType] = useState('');
+  const [editingParameterIndex, setEditingParameterIndex] = useState<number>(-1);
+  const [editingFieldGroupIndex, setEditingFieldGroupIndex] = useState<number>(-1);
+  const [configType, setConfigType] = useState<string>('');
 
   // Available parameter types
   const parameterTypes = [
@@ -58,7 +65,7 @@ const ComponentEditor = ({ component, onSave, onCancel, groupName }) => {
   useEffect(() => {
     if (component) {
       // Copy the component data to our form
-      const componentData = { ...component, resourceVersion: component.resourceVersion || null };
+      const componentData: Component = { ...component, resourceVersion: component.resourceVersion || null };
       setFormData(componentData);
     } else {
       // Set default values for a new component
@@ -80,8 +87,10 @@ const ComponentEditor = ({ component, onSave, onCancel, groupName }) => {
   }, [component, groupName]);
   
   // Handle changes to the component form fields
-  const handleComponentChange = (e) => {
-    const { name, value, type, checked } = e.target;
+  const handleComponentChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target;
+    const checked = (e.target as HTMLInputElement).checked;
+    
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
@@ -89,8 +98,10 @@ const ComponentEditor = ({ component, onSave, onCancel, groupName }) => {
   };
   
   // Handle changes to the current parameter being edited
-  const handleParameterChange = (e) => {
-    const { name, value, type, checked } = e.target;
+  const handleParameterChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
+    const checked = (e.target as HTMLInputElement).checked;
+    
     setCurrentParameter(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
@@ -98,12 +109,12 @@ const ComponentEditor = ({ component, onSave, onCancel, groupName }) => {
   };
 
   // Handle changes to parameter config type
-  const handleConfigTypeChange = (e) => {
+  const handleConfigTypeChange = (e: ChangeEvent<HTMLSelectElement>) => {
     const { value } = e.target;
     setConfigType(value);
     
     // Initialize config object based on selected type
-    let configObj = null;
+    let configObj: ParameterConfig | null = null;
     
     if (value === 'contentpath') {
       configObj = {
@@ -139,41 +150,48 @@ const ComponentEditor = ({ component, onSave, onCancel, groupName }) => {
   };
 
   // Handle changes to parameter config properties
-  const handleConfigChange = (e) => {
-    const { name, value, type, checked } = e.target;
+  const handleConfigChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
+    const checked = (e.target as HTMLInputElement).checked;
+    
+    if (!currentParameter.config) return;
     
     setCurrentParameter(prev => ({
       ...prev,
-      config: {
+      config: prev.config ? {
         ...prev.config,
         [name]: type === 'checkbox' ? checked : value
-      }
+      } : null
     }));
   };
 
   // Handle changes to dropdown values (comma-separated list)
-  const handleDropdownValuesChange = (e) => {
+  const handleDropdownValuesChange = (e: ChangeEvent<HTMLInputElement>) => {
     const values = e.target.value.split(',').map(val => val.trim());
+    
+    if (!currentParameter.config) return;
     
     setCurrentParameter(prev => ({
       ...prev,
-      config: {
+      config: prev.config ? {
         ...prev.config,
         value: values
-      }
+      } : null
     }));
   };
 
   // Handle changes to selectable node types (comma-separated list)
-  const handleNodeTypesChange = (e) => {
+  const handleNodeTypesChange = (e: ChangeEvent<HTMLInputElement>) => {
     const nodeTypes = e.target.value.split(',').map(type => type.trim());
+    
+    if (!currentParameter.config) return;
     
     setCurrentParameter(prev => ({
       ...prev,
-      config: {
+      config: prev.config ? {
         ...prev.config,
         pickerSelectableNodeTypes: nodeTypes
-      }
+      } : null
     }));
   };
   
@@ -226,7 +244,7 @@ const ComponentEditor = ({ component, onSave, onCancel, groupName }) => {
   };
   
   // Edit an existing parameter
-  const editParameter = (index) => {
+  const editParameter = (index: number) => {
     const parameter = formData.parameters[index];
     setCurrentParameter({ ...parameter });
     
@@ -241,7 +259,7 @@ const ComponentEditor = ({ component, onSave, onCancel, groupName }) => {
   };
   
   // Delete a parameter
-  const deleteParameter = (index) => {
+  const deleteParameter = (index: number) => {
     const updatedParameters = [...formData.parameters];
     updatedParameters.splice(index, 1);
     
@@ -269,7 +287,7 @@ const ComponentEditor = ({ component, onSave, onCancel, groupName }) => {
   };
 
   // Handle changes to the current field group being edited
-  const handleFieldGroupChange = (e) => {
+  const handleFieldGroupChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setCurrentFieldGroup(prev => ({
       ...prev,
@@ -278,7 +296,7 @@ const ComponentEditor = ({ component, onSave, onCancel, groupName }) => {
   };
 
   // Handle changes to field group parameters checkboxes
-  const handleFieldGroupParameterToggle = (paramName) => {
+  const handleFieldGroupParameterToggle = (paramName: string) => {
     setCurrentFieldGroup(prev => {
       const paramIndex = prev.parameters.indexOf(paramName);
       if (paramIndex >= 0) {
@@ -335,13 +353,13 @@ const ComponentEditor = ({ component, onSave, onCancel, groupName }) => {
   };
 
   // Edit an existing field group
-  const editFieldGroup = (index) => {
+  const editFieldGroup = (index: number) => {
     setCurrentFieldGroup({ ...formData.fieldGroups[index] });
     setEditingFieldGroupIndex(index);
   };
 
   // Delete a field group
-  const deleteFieldGroup = (index) => {
+  const deleteFieldGroup = (index: number) => {
     const updatedFieldGroups = [...formData.fieldGroups];
     updatedFieldGroups.splice(index, 1);
     
@@ -362,7 +380,7 @@ const ComponentEditor = ({ component, onSave, onCancel, groupName }) => {
   };
   
   // Submit the form
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     // Basic validation
@@ -375,7 +393,7 @@ const ComponentEditor = ({ component, onSave, onCancel, groupName }) => {
   };
 
   // Extract component name from ID for new components
-  const handleComponentNameChange = (e) => {
+  const handleComponentNameChange = (e: ChangeEvent<HTMLInputElement>) => {
     const name = e.target.value;
     setFormData(prev => ({
       ...prev,
@@ -388,7 +406,7 @@ const ComponentEditor = ({ component, onSave, onCancel, groupName }) => {
       <div className="editor-header">
         <h2>{component ? 'Edit Component' : 'Create Component'}</h2>
         <div className="editor-actions">
-          <button className="btn btn-primary" onClick={handleSubmit}>
+          <button className="btn btn-primary" onClick={() => handleSubmit({ preventDefault: () => {} } as any)}>
             <FiSave /> Save
           </button>
           <button className="btn btn-outline" onClick={onCancel}>
@@ -506,7 +524,7 @@ const ComponentEditor = ({ component, onSave, onCancel, groupName }) => {
               value={formData.icon || ''}
               onChange={handleComponentChange}
               placeholder="data:image/svg+xml;base64,..."
-              rows="2"
+              rows={2}
             />
             <small>Base64 encoded icon for this component</small>
           </div>
@@ -732,7 +750,7 @@ const ComponentEditor = ({ component, onSave, onCancel, groupName }) => {
                 </select>
               </div>
               
-              {configType === 'contentpath' && (
+              {configType === 'contentpath' && currentParameter.config && (
                 <div className="config-form">
                   <div className="form-row">
                     <div className="form-group">
@@ -741,7 +759,7 @@ const ComponentEditor = ({ component, onSave, onCancel, groupName }) => {
                         type="text"
                         id="pickerConfiguration"
                         name="pickerConfiguration"
-                        value={currentParameter.config?.pickerConfiguration || ''}
+                        value={currentParameter.config.pickerConfiguration || ''}
                         onChange={handleConfigChange}
                         placeholder="e.g. cms-pickers/documents-only"
                       />
@@ -753,7 +771,7 @@ const ComponentEditor = ({ component, onSave, onCancel, groupName }) => {
                         type="text"
                         id="pickerInitialPath"
                         name="pickerInitialPath"
-                        value={currentParameter.config?.pickerInitialPath || ''}
+                        value={currentParameter.config.pickerInitialPath || ''}
                         onChange={handleConfigChange}
                         placeholder="e.g. banners"
                       />
@@ -767,7 +785,7 @@ const ComponentEditor = ({ component, onSave, onCancel, groupName }) => {
                         type="text"
                         id="pickerSelectableNodeTypes"
                         name="pickerSelectableNodeTypes"
-                        value={currentParameter.config?.pickerSelectableNodeTypes?.join(', ') || ''}
+                        value={currentParameter.config.pickerSelectableNodeTypes?.join(', ') || ''}
                         onChange={handleNodeTypesChange}
                         placeholder="e.g. banner, image, document"
                       />
@@ -780,7 +798,7 @@ const ComponentEditor = ({ component, onSave, onCancel, groupName }) => {
                           <input
                             type="checkbox"
                             name="pickerRememberLastVisited"
-                            checked={currentParameter.config?.pickerRememberLastVisited || false}
+                            checked={currentParameter.config.pickerRememberLastVisited || false}
                             onChange={handleConfigChange}
                           />
                           Remember Last Visited
@@ -792,7 +810,7 @@ const ComponentEditor = ({ component, onSave, onCancel, groupName }) => {
                           <input
                             type="checkbox"
                             name="relative"
-                            checked={currentParameter.config?.relative || false}
+                            checked={currentParameter.config.relative || false}
                             onChange={handleConfigChange}
                           />
                           Relative Path
@@ -803,7 +821,7 @@ const ComponentEditor = ({ component, onSave, onCancel, groupName }) => {
                 </div>
               )}
               
-              {configType === 'dropdown' && (
+              {configType === 'dropdown' && currentParameter.config && (
                 <div className="config-form">
                   <div className="form-row">
                     <div className="form-group">
@@ -812,7 +830,7 @@ const ComponentEditor = ({ component, onSave, onCancel, groupName }) => {
                         type="text"
                         id="sourceId"
                         name="sourceId"
-                        value={currentParameter.config?.sourceId || ''}
+                        value={currentParameter.config.sourceId || ''}
                         onChange={handleConfigChange}
                         placeholder="Source ID for the dropdown"
                         required={configType === 'dropdown'}
@@ -825,7 +843,7 @@ const ComponentEditor = ({ component, onSave, onCancel, groupName }) => {
                         type="text"
                         id="dropdownValues"
                         name="dropdownValues"
-                        value={currentParameter.config?.value?.join(', ') || ''}
+                        value={currentParameter.config.value?.join(', ') || ''}
                         onChange={handleDropdownValuesChange}
                         placeholder="e.g. value1, value2, value3"
                       />
@@ -835,7 +853,7 @@ const ComponentEditor = ({ component, onSave, onCancel, groupName }) => {
                 </div>
               )}
               
-              {configType === 'imagesetpath' && (
+              {configType === 'imagesetpath' && currentParameter.config && (
                 <div className="config-form">
                   <div className="form-row">
                     <div className="form-group">
@@ -844,7 +862,7 @@ const ComponentEditor = ({ component, onSave, onCancel, groupName }) => {
                         type="text"
                         id="pickerConfiguration"
                         name="pickerConfiguration"
-                        value={currentParameter.config?.pickerConfiguration || ''}
+                        value={currentParameter.config.pickerConfiguration || ''}
                         onChange={handleConfigChange}
                         placeholder="e.g. cms-pickers/images"
                       />
@@ -856,7 +874,7 @@ const ComponentEditor = ({ component, onSave, onCancel, groupName }) => {
                         type="text"
                         id="pickerInitialPath"
                         name="pickerInitialPath"
-                        value={currentParameter.config?.pickerInitialPath || ''}
+                        value={currentParameter.config.pickerInitialPath || ''}
                         onChange={handleConfigChange}
                         placeholder="e.g. gallery"
                       />
@@ -870,7 +888,7 @@ const ComponentEditor = ({ component, onSave, onCancel, groupName }) => {
                         type="text"
                         id="previewVariant"
                         name="previewVariant"
-                        value={currentParameter.config?.previewVariant || ''}
+                        value={currentParameter.config.previewVariant || ''}
                         onChange={handleConfigChange}
                         placeholder="e.g. thumbnail"
                       />
@@ -882,7 +900,7 @@ const ComponentEditor = ({ component, onSave, onCancel, groupName }) => {
                           <input
                             type="checkbox"
                             name="pickerRememberLastVisited"
-                            checked={currentParameter.config?.pickerRememberLastVisited || false}
+                            checked={currentParameter.config.pickerRememberLastVisited || false}
                             onChange={handleConfigChange}
                           />
                           Remember Last Visited
@@ -894,7 +912,7 @@ const ComponentEditor = ({ component, onSave, onCancel, groupName }) => {
                           <input
                             type="checkbox"
                             name="enableUpload"
-                            checked={currentParameter.config?.enableUpload || false}
+                            checked={currentParameter.config.enableUpload || false}
                             onChange={handleConfigChange}
                           />
                           Enable Upload
