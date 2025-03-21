@@ -1,9 +1,16 @@
 // src/components/ComponentManager.js
-import React, { useState, useEffect } from 'react';
-import { FiPlus, FiEdit2, FiTrash2, FiRefreshCw, FiCopy, FiDownload } from 'react-icons/fi';
-import { toast } from 'react-toastify';
-import ComponentEditor from './ComponentEditor';
-import './ComponentManager.css';
+import React, { useEffect, useState } from "react";
+import {
+  FiCopy,
+  FiDownload,
+  FiEdit2,
+  FiPlus,
+  FiRefreshCw,
+  FiTrash2,
+} from "react-icons/fi";
+import { toast } from "react-toastify";
+import ComponentEditor from "./ComponentEditor";
+import "./ComponentManager.css";
 
 const ComponentManager = ({ makeApiRequest }) => {
   const [componentGroups, setComponentGroups] = useState([]);
@@ -11,23 +18,28 @@ const ComponentManager = ({ makeApiRequest }) => {
   const [loading, setLoading] = useState(false);
   const [showEditor, setShowEditor] = useState(false);
   const [editingComponent, setEditingComponent] = useState(null);
-  const [currentGroup, setCurrentGroup] = useState('');
-  const [channelId, setChannelId] = useState('');
+  const [currentGroup, setCurrentGroup] = useState("");
+  const [channelId, setChannelId] = useState("");
+  const [activeChannelId, setActiveChannelId] = useState(""); // New state for active/connected channel
   const [jsonExport, setJsonExport] = useState(null);
   const [showGroupForm, setShowGroupForm] = useState(false);
-  const [newGroup, setNewGroup] = useState({ name: '', hidden: false, system: false });
+  const [newGroup, setNewGroup] = useState({
+    name: "",
+    hidden: false,
+    system: false,
+  });
 
-  // Fetch component groups when channel ID changes
+  // Fetch component groups when ACTIVE channel ID changes
   useEffect(() => {
-    if (channelId) {
+    if (activeChannelId) {
       fetchComponentGroups();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [channelId]);
+  }, [activeChannelId]);
 
   // Fetch components when group changes
   useEffect(() => {
-    if (channelId && currentGroup) {
+    if (activeChannelId && currentGroup) {
       fetchComponents();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -38,21 +50,21 @@ const ComponentManager = ({ makeApiRequest }) => {
     setLoading(true);
     try {
       const result = await makeApiRequest({
-        section: 'components',
-        operation: 'getGroups',
-        channelId
+        section: "components",
+        operation: "getGroups",
+        channelId: activeChannelId,
       });
-      
+
       if (result.success) {
         setComponentGroups(result.data);
-        
+
         // Set the first group as current if there's no current group
         if (result.data.length > 0 && !currentGroup) {
           setCurrentGroup(result.data[0].name);
         }
       }
     } catch (error) {
-      console.error('Failed to fetch component groups:', error);
+      console.error("Failed to fetch component groups:", error);
     } finally {
       setLoading(false);
     }
@@ -63,17 +75,17 @@ const ComponentManager = ({ makeApiRequest }) => {
     setLoading(true);
     try {
       const result = await makeApiRequest({
-        section: 'components',
-        operation: 'getComponents',
-        channelId,
-        componentGroup: currentGroup
+        section: "components",
+        operation: "getComponents",
+        channelId: activeChannelId,
+        componentGroup: currentGroup,
       });
-      
+
       if (result.success) {
         setComponents(result.data);
       }
     } catch (error) {
-      console.error('Failed to fetch components:', error);
+      console.error("Failed to fetch components:", error);
     } finally {
       setLoading(false);
     }
@@ -84,26 +96,26 @@ const ComponentManager = ({ makeApiRequest }) => {
     setLoading(true);
     try {
       const result = await makeApiRequest({
-        section: 'components',
-        operation: 'getComponent',
-        channelId,
+        section: "components",
+        operation: "getComponent",
+        channelId: activeChannelId,
         componentGroup: currentGroup,
-        resourceId: componentName
+        resourceId: componentName,
       });
-      
+
       if (result.success) {
         // Include resource version for PUT operations
         const component = {
           ...result.data,
-          resourceVersion: result.resourceVersion
+          resourceVersion: result.resourceVersion,
         };
-        
+
         setEditingComponent(component);
         setShowEditor(true);
       }
     } catch (error) {
-      console.error('Failed to fetch component details:', error);
-      toast.error('Failed to load component details');
+      console.error("Failed to fetch component details:", error);
+      toast.error("Failed to load component details");
     } finally {
       setLoading(false);
     }
@@ -111,27 +123,31 @@ const ComponentManager = ({ makeApiRequest }) => {
 
   // Delete a component
   const deleteComponent = async (componentName) => {
-    if (!window.confirm(`Are you sure you want to delete component ${componentName}?`)) {
+    if (
+      !window.confirm(
+        `Are you sure you want to delete component ${componentName}?`
+      )
+    ) {
       return;
     }
-    
+
     setLoading(true);
     try {
       const result = await makeApiRequest({
-        section: 'components',
-        operation: 'deleteComponent',
-        channelId,
+        section: "components",
+        operation: "deleteComponent",
+        channelId: activeChannelId,
         componentGroup: currentGroup,
-        resourceId: componentName
+        resourceId: componentName,
       });
-      
+
       if (result.success) {
         toast.success(`Component ${componentName} deleted successfully`);
         fetchComponents();
       }
     } catch (error) {
-      console.error('Failed to delete component:', error);
-      toast.error('Failed to delete component');
+      console.error("Failed to delete component:", error);
+      toast.error("Failed to delete component");
     } finally {
       setLoading(false);
     }
@@ -146,28 +162,34 @@ const ComponentManager = ({ makeApiRequest }) => {
   // Handle saving component (create or update)
   const handleSaveComponent = async (component) => {
     setLoading(true);
-    
+
     try {
-      const operation = component.resourceVersion ? 'updateComponent' : 'createComponent';
-      const resourceId = component.name || component.id.split('/')[1];
-      
+      const operation = component.resourceVersion
+        ? "updateComponent"
+        : "createComponent";
+      const resourceId = component.name || component.id.split("/")[1];
+
       const result = await makeApiRequest({
-        section: 'components',
+        section: "components",
         operation,
-        channelId,
+        channelId: activeChannelId,
         componentGroup: currentGroup,
         resourceId,
-        resourceData: component
+        resourceData: component,
       });
-      
+
       if (result.success) {
-        toast.success(`Component ${operation === 'createComponent' ? 'created' : 'updated'} successfully`);
+        toast.success(
+          `Component ${
+            operation === "createComponent" ? "created" : "updated"
+          } successfully`
+        );
         setShowEditor(false);
         fetchComponents();
       }
     } catch (error) {
-      console.error('Failed to save component:', error);
-      toast.error('Failed to save component');
+      console.error("Failed to save component:", error);
+      toast.error("Failed to save component");
     } finally {
       setLoading(false);
     }
@@ -176,33 +198,33 @@ const ComponentManager = ({ makeApiRequest }) => {
   // Create a new component group
   const createComponentGroup = async () => {
     if (!newGroup.name) {
-      toast.error('Group name is required');
+      toast.error("Group name is required");
       return;
     }
-    
+
     setLoading(true);
     try {
       const result = await makeApiRequest({
-        section: 'components',
-        operation: 'createGroup',
-        channelId,
+        section: "components",
+        operation: "createGroup",
+        channelId: activeChannelId,
         componentGroup: newGroup.name,
         resourceData: {
           hidden: newGroup.hidden,
-          system: newGroup.system
-        }
+          system: newGroup.system,
+        },
       });
-      
+
       if (result.success) {
         toast.success(`Component group ${newGroup.name} created successfully`);
         setShowGroupForm(false);
-        setNewGroup({ name: '', hidden: false, system: false });
+        setNewGroup({ name: "", hidden: false, system: false });
         fetchComponentGroups();
         setCurrentGroup(newGroup.name);
       }
     } catch (error) {
-      console.error('Failed to create component group:', error);
-      toast.error('Failed to create component group');
+      console.error("Failed to create component group:", error);
+      toast.error("Failed to create component group");
     } finally {
       setLoading(false);
     }
@@ -210,33 +232,37 @@ const ComponentManager = ({ makeApiRequest }) => {
 
   // Delete a component group
   const deleteComponentGroup = async (groupName) => {
-    if (!window.confirm(`Are you sure you want to delete component group ${groupName}?`)) {
+    if (
+      !window.confirm(
+        `Are you sure you want to delete component group ${groupName}?`
+      )
+    ) {
       return;
     }
-    
+
     setLoading(true);
     try {
       const result = await makeApiRequest({
-        section: 'components',
-        operation: 'deleteGroup',
-        channelId,
-        componentGroup: groupName
+        section: "components",
+        operation: "deleteGroup",
+        channelId: activeChannelId,
+        componentGroup: groupName,
       });
-      
+
       if (result.success) {
         toast.success(`Component group ${groupName} deleted successfully`);
-        
+
         // If we deleted the current group, reset it
         if (currentGroup === groupName) {
-          setCurrentGroup('');
+          setCurrentGroup("");
           setComponents([]);
         }
-        
+
         fetchComponentGroups();
       }
     } catch (error) {
-      console.error('Failed to delete component group:', error);
-      toast.error('Failed to delete component group');
+      console.error("Failed to delete component group:", error);
+      toast.error("Failed to delete component group");
     } finally {
       setLoading(false);
     }
@@ -249,17 +275,23 @@ const ComponentManager = ({ makeApiRequest }) => {
 
   // Copy JSON to clipboard
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(JSON.stringify(jsonExport, null, 2))
-      .then(() => toast.success('Copied to clipboard'))
-      .catch(() => toast.error('Failed to copy to clipboard'));
+    navigator.clipboard
+      .writeText(JSON.stringify(jsonExport, null, 2))
+      .then(() => toast.success("Copied to clipboard"))
+      .catch(() => toast.error("Failed to copy to clipboard"));
   };
 
   // Download JSON file
   const downloadJson = () => {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(jsonExport, null, 2));
-    const downloadAnchorNode = document.createElement('a');
+    const dataStr =
+      "data:text/json;charset=utf-8," +
+      encodeURIComponent(JSON.stringify(jsonExport, null, 2));
+    const downloadAnchorNode = document.createElement("a");
     downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", `${jsonExport.name || 'component'}.json`);
+    downloadAnchorNode.setAttribute(
+      "download",
+      `${jsonExport.name || "component"}.json`
+    );
     document.body.appendChild(downloadAnchorNode);
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
@@ -274,24 +306,24 @@ const ComponentManager = ({ makeApiRequest }) => {
   const handleChannelIdSubmit = (e) => {
     e.preventDefault();
     if (channelId) {
-      fetchComponentGroups();
+      setActiveChannelId(channelId); // Set the active channel ID to trigger the fetch
     }
   };
 
   // Handle changes to the new group form
   const handleNewGroupChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setNewGroup(prev => ({
+    setNewGroup((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === "checkbox" ? checked : value,
     }));
   };
 
   return (
     <div className="component-manager">
       {showEditor ? (
-        <ComponentEditor 
-          component={editingComponent} 
+        <ComponentEditor
+          component={editingComponent}
           onSave={handleSaveComponent}
           onCancel={() => setShowEditor(false)}
           groupName={currentGroup}
@@ -301,8 +333,8 @@ const ComponentManager = ({ makeApiRequest }) => {
           <div className="manager-header">
             <div className="manager-title">
               <h2>Components</h2>
-              
-              {!channelId ? (
+
+              {!activeChannelId ? (
                 <form className="channel-form" onSubmit={handleChannelIdSubmit}>
                   <div className="form-group">
                     <label htmlFor="channelId">Channel ID</label>
@@ -315,22 +347,34 @@ const ComponentManager = ({ makeApiRequest }) => {
                         placeholder="e.g. brxsaas or brxsaas-projectId"
                         required
                       />
-                      <button type="submit" className="btn">Connect</button>
+                      <button type="submit" className="btn">
+                        Connect
+                      </button>
                     </div>
                     <small>Enter the channel ID to manage its components</small>
                   </div>
                 </form>
               ) : (
                 <div className="channel-info">
-                  <span>Channel: {channelId}</span>
-                  <button className="btn-link" onClick={() => setChannelId('')}>Change</button>
+                  <span>Channel: {activeChannelId}</span>
+                  <button
+                    className="btn-link"
+                    onClick={() => {
+                      setActiveChannelId("");
+                      setCurrentGroup("");
+                      setComponents([]);
+                      setComponentGroups([]);
+                    }}
+                  >
+                    Change
+                  </button>
                 </div>
               )}
             </div>
-            
-            {channelId && (
+
+            {activeChannelId && (
               <div className="manager-actions">
-                <button 
+                <button
                   className="btn btn-primary"
                   onClick={() => setShowGroupForm(true)}
                   disabled={loading}
@@ -338,7 +382,7 @@ const ComponentManager = ({ makeApiRequest }) => {
                   <FiPlus /> New Group
                 </button>
                 {currentGroup && (
-                  <button 
+                  <button
                     className="btn btn-primary"
                     onClick={createComponent}
                     disabled={loading}
@@ -346,9 +390,11 @@ const ComponentManager = ({ makeApiRequest }) => {
                     <FiPlus /> New Component
                   </button>
                 )}
-                <button 
+                <button
                   className="btn btn-outline"
-                  onClick={currentGroup ? fetchComponents : fetchComponentGroups}
+                  onClick={
+                    currentGroup ? fetchComponents : fetchComponentGroups
+                  }
                   disabled={loading}
                 >
                   <FiRefreshCw /> Refresh
@@ -356,7 +402,7 @@ const ComponentManager = ({ makeApiRequest }) => {
               </div>
             )}
           </div>
-          
+
           {showGroupForm && (
             <div className="group-form">
               <h3>New Component Group</h3>
@@ -373,7 +419,7 @@ const ComponentManager = ({ makeApiRequest }) => {
                     required
                   />
                 </div>
-                
+
                 <div className="form-group checkbox-group">
                   <div className="checkbox-row">
                     <label>
@@ -386,7 +432,7 @@ const ComponentManager = ({ makeApiRequest }) => {
                       Hidden
                     </label>
                   </div>
-                  
+
                   <div className="checkbox-row">
                     <label>
                       <input
@@ -400,20 +446,20 @@ const ComponentManager = ({ makeApiRequest }) => {
                   </div>
                 </div>
               </div>
-              
+
               <div className="form-actions">
-                <button 
+                <button
                   className="btn btn-primary"
                   onClick={createComponentGroup}
                   disabled={loading}
                 >
                   Create Group
                 </button>
-                <button 
+                <button
                   className="btn btn-outline"
                   onClick={() => {
                     setShowGroupForm(false);
-                    setNewGroup({ name: '', hidden: false, system: false });
+                    setNewGroup({ name: "", hidden: false, system: false });
                   }}
                 >
                   Cancel
@@ -421,15 +467,15 @@ const ComponentManager = ({ makeApiRequest }) => {
               </div>
             </div>
           )}
-          
-          {channelId && (
+
+          {activeChannelId && (
             <div className="component-workspace">
               <div className="component-sidebar">
                 <h3>Component Groups</h3>
                 {componentGroups.length === 0 ? (
                   <div className="empty-state">
                     <p>No component groups found.</p>
-                    <button 
+                    <button
                       className="btn btn-sm"
                       onClick={() => setShowGroupForm(true)}
                     >
@@ -439,24 +485,28 @@ const ComponentManager = ({ makeApiRequest }) => {
                 ) : (
                   <ul className="group-list">
                     {componentGroups.map((group) => (
-                      <li 
+                      <li
                         key={group.name}
-                        className={currentGroup === group.name ? 'active' : ''}
+                        className={currentGroup === group.name ? "active" : ""}
                       >
-                        <div 
+                        <div
                           className="group-item"
                           onClick={() => setCurrentGroup(group.name)}
                         >
                           <span>{group.name}</span>
                           {(group.hidden || group.system) && (
                             <span className="group-badges">
-                              {group.hidden && <span className="badge">Hidden</span>}
-                              {group.system && <span className="badge system">System</span>}
+                              {group.hidden && (
+                                <span className="badge">Hidden</span>
+                              )}
+                              {group.system && (
+                                <span className="badge system">System</span>
+                              )}
                             </span>
                           )}
                         </div>
                         {!group.system && (
-                          <button 
+                          <button
                             className="icon-btn delete"
                             onClick={(e) => {
                               e.stopPropagation();
@@ -472,18 +522,24 @@ const ComponentManager = ({ makeApiRequest }) => {
                   </ul>
                 )}
               </div>
-              
+
               <div className="component-content">
                 {!currentGroup ? (
                   <div className="empty-state">
-                    <p>Select a component group from the sidebar or create a new one.</p>
+                    <p>
+                      Select a component group from the sidebar or create a new
+                      one.
+                    </p>
                   </div>
                 ) : loading ? (
                   <div className="loading">Loading components...</div>
                 ) : components.length === 0 ? (
                   <div className="empty-state">
                     <p>No components found in group "{currentGroup}".</p>
-                    <button className="btn btn-primary" onClick={createComponent}>
+                    <button
+                      className="btn btn-primary"
+                      onClick={createComponent}
+                    >
                       Create your first component
                     </button>
                   </div>
@@ -502,32 +558,36 @@ const ComponentManager = ({ makeApiRequest }) => {
                       </thead>
                       <tbody>
                         {components.map((component) => {
-                          const componentName = component.id.split('/')[1];
+                          const componentName = component.id.split("/")[1];
                           return (
                             <tr key={component.id}>
                               <td>{componentName}</td>
-                              <td>{component.label || '-'}</td>
-                              <td>{component.ctype || '-'}</td>
-                              <td>{component.hidden ? 'Yes' : 'No'}</td>
+                              <td>{component.label || "-"}</td>
+                              <td>{component.ctype || "-"}</td>
+                              <td>{component.hidden ? "Yes" : "No"}</td>
                               <td>
                                 <div className="action-buttons">
-                                  <button 
+                                  <button
                                     className="icon-btn edit"
-                                    onClick={() => getComponentDetails(componentName)}
+                                    onClick={() =>
+                                      getComponentDetails(componentName)
+                                    }
                                     title="Edit"
                                   >
                                     <FiEdit2 />
                                   </button>
                                   {!component.system && (
-                                    <button 
+                                    <button
                                       className="icon-btn delete"
-                                      onClick={() => deleteComponent(componentName)}
+                                      onClick={() =>
+                                        deleteComponent(componentName)
+                                      }
                                       title="Delete"
                                     >
                                       <FiTrash2 />
                                     </button>
                                   )}
-                                  <button 
+                                  <button
                                     className="icon-btn export"
                                     onClick={() => exportComponent(component)}
                                     title="Export"
@@ -546,7 +606,7 @@ const ComponentManager = ({ makeApiRequest }) => {
               </div>
             </div>
           )}
-          
+
           {jsonExport && (
             <div className="json-export">
               <div className="export-header">
@@ -558,8 +618,8 @@ const ComponentManager = ({ makeApiRequest }) => {
                   <button className="btn btn-sm" onClick={downloadJson}>
                     <FiDownload /> Download
                   </button>
-                  <button 
-                    className="btn btn-sm btn-outline" 
+                  <button
+                    className="btn btn-sm btn-outline"
                     onClick={() => setJsonExport(null)}
                   >
                     Close
