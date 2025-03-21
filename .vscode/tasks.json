@@ -1,0 +1,15 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Generate Project Structure",
+      "type": "shell",
+      "command": "tree -I 'node_modules|.git' > project_structure.txt",
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      },
+      "problemMatcher": []
+    }
+  ]
+}
