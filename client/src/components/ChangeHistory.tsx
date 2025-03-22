@@ -8,7 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Download, Info, Trash2, X } from "lucide-react";
+import { Download, FileBadge, Info, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import { Change, ChangeHistoryProps } from "../types";
 import ChangeDetail from "./ChangeDetail";
@@ -17,12 +17,53 @@ const ChangeHistory: React.FC<ChangeHistoryProps> = ({
   changes,
   onClear,
   onExport,
+  onDownloadModifiedFiles, // New prop for downloading modified files
 }) => {
   const [selectedChange, setSelectedChange] = useState<Change | null>(null);
+  const [downloadDialogOpen, setDownloadDialogOpen] = useState<boolean>(false);
 
   const handleChangeClick = (change: Change) => {
     setSelectedChange(change);
   };
+
+  // Get unique entities including both modified and deleted ones
+  const getUniqueEntities = () => {
+    const modifiedMap = new Map();
+    const deletedMap = new Map();
+
+    changes.forEach((change) => {
+      const key = `${change.entityType}:${change.entityName}`;
+
+      // Check if this is the most recent change for this entity
+      const isModified = modifiedMap.has(key);
+      const isDeleted = deletedMap.has(key);
+      const isMoreRecent =
+        (isModified || isDeleted) &&
+        (isModified
+          ? new Date(change.timestamp) >
+            new Date(modifiedMap.get(key).timestamp)
+          : new Date(change.timestamp) >
+            new Date(deletedMap.get(key).timestamp));
+
+      if ((!isModified && !isDeleted) || isMoreRecent) {
+        if (change.action === "DELETE") {
+          deletedMap.set(key, change);
+          modifiedMap.delete(key);
+        } else {
+          modifiedMap.set(key, change);
+          deletedMap.delete(key);
+        }
+      }
+    });
+
+    return {
+      modified: Array.from(modifiedMap.values()),
+      deleted: Array.from(deletedMap.values()),
+    };
+  };
+
+  const { modified: modifiedEntities, deleted: deletedEntities } =
+    getUniqueEntities();
 
   if (changes.length === 0) {
     return (
@@ -33,6 +74,10 @@ const ChangeHistory: React.FC<ChangeHistoryProps> = ({
             <Button variant="outline" size="sm" disabled>
               <Download className="mr-2 h-4 w-4" />
               Export
+            </Button>
+            <Button variant="outline" size="sm" disabled>
+              <FileBadge className="mr-2 h-4 w-4" />
+              Download Files
             </Button>
             <Button variant="outline" size="sm" disabled>
               <Trash2 className="mr-2 h-4 w-4" />
@@ -60,6 +105,18 @@ const ChangeHistory: React.FC<ChangeHistoryProps> = ({
           >
             <Download className="mr-2 h-4 w-4" />
             Export
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => setDownloadDialogOpen(true)}
+            className="cursor-pointer"
+            disabled={
+              modifiedEntities.length === 0 && deletedEntities.length === 0
+            }
+          >
+            <FileBadge className="mr-2 h-4 w-4" />
+            Download Files
           </Button>
           <Button
             variant="outline"
@@ -158,6 +215,143 @@ const ChangeHistory: React.FC<ChangeHistoryProps> = ({
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Download Modified Files Dialog */}
+      <Dialog open={downloadDialogOpen} onOpenChange={setDownloadDialogOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Download Modified Files</DialogTitle>
+          </DialogHeader>
+
+          <div className="py-4">
+            <p className="mb-4 text-sm text-muted-foreground">
+              The following changes will be included in your download:
+            </p>
+
+            {/* Modified Entities Table */}
+            {modifiedEntities.length > 0 && (
+              <>
+                <h3 className="text-sm font-medium mb-2">
+                  Files to be Created/Updated:
+                </h3>
+                <div className="border rounded-md overflow-hidden mb-6">
+                  <table className="w-full">
+                    <thead className="bg-muted text-sm">
+                      <tr>
+                        <th className="text-left py-2 px-4 font-medium">
+                          File Name
+                        </th>
+                        <th className="text-left py-2 px-4 font-medium">
+                          Type
+                        </th>
+                        <th className="text-left py-2 px-4 font-medium">
+                          Action
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {modifiedEntities.map((entity, index) => (
+                        <tr key={index} className="text-sm">
+                          <td className="py-2 px-4 font-mono">
+                            {entity.entityName}.json
+                          </td>
+                          <td className="py-2 px-4">{entity.entityType}</td>
+                          <td className="py-2 px-4">
+                            <Badge
+                              variant={
+                                entity.action === "CREATE"
+                                  ? "success"
+                                  : "default"
+                              }
+                              className="font-normal"
+                            >
+                              {entity.action}
+                            </Badge>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
+
+            {/* Deleted Entities Table */}
+            {deletedEntities.length > 0 && (
+              <>
+                <h3 className="text-sm font-medium mb-2">
+                  Files to be Deleted:
+                </h3>
+                <div className="border rounded-md overflow-hidden">
+                  <table className="w-full">
+                    <thead className="bg-muted text-sm">
+                      <tr>
+                        <th className="text-left py-2 px-4 font-medium">
+                          File Name
+                        </th>
+                        <th className="text-left py-2 px-4 font-medium">
+                          Type
+                        </th>
+                        <th className="text-left py-2 px-4 font-medium">
+                          Action
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {deletedEntities.map((entity, index) => (
+                        <tr key={index} className="text-sm">
+                          <td className="py-2 px-4 font-mono">
+                            {entity.entityName}.json
+                          </td>
+                          <td className="py-2 px-4">{entity.entityType}</td>
+                          <td className="py-2 px-4">
+                            <Badge
+                              variant="destructive"
+                              className="font-normal"
+                            >
+                              {entity.action}
+                            </Badge>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-md text-amber-800 text-sm">
+                  <strong>Note:</strong> Deleted files will be listed in the
+                  manifest.md file and can be removed from your git repository
+                  using the included apply-changes.sh script.
+                </div>
+              </>
+            )}
+
+            {modifiedEntities.length === 0 && deletedEntities.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">
+                No changes to download.
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setDownloadDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                onDownloadModifiedFiles();
+                setDownloadDialogOpen(false);
+              }}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Download Files
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };
