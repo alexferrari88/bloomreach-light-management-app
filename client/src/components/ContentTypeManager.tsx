@@ -235,12 +235,15 @@ const ContentTypeManager: React.FC<ContentTypeManagerProps> = ({
                 }
                 className="border rounded-md"
               >
-                <ToggleGroupItem value="core" className="px-4 min-w-[100px]">
+                <ToggleGroupItem
+                  value="core"
+                  className="px-4 min-w-[100px] cursor-pointer"
+                >
                   Core
                 </ToggleGroupItem>
                 <ToggleGroupItem
                   value="development"
-                  className="px-4 min-w-[100px]"
+                  className="px-4 min-w-[100px] cursor-pointer"
                 >
                   Development
                 </ToggleGroupItem>
@@ -248,13 +251,18 @@ const ContentTypeManager: React.FC<ContentTypeManagerProps> = ({
             </div>
 
             <div className="flex space-x-3">
-              <Button onClick={createContentType} disabled={loading}>
+              <Button
+                onClick={createContentType}
+                disabled={loading}
+                className="cursor-pointer"
+              >
                 <PlusCircle className="mr-2 h-4 w-4" /> New Content Type
               </Button>
               <Button
                 variant="outline"
                 onClick={fetchContentTypes}
                 disabled={loading}
+                className="cursor-pointer"
               >
                 <RefreshCw className="mr-2 h-4 w-4" /> Refresh
               </Button>

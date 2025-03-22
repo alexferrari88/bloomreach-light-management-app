@@ -443,6 +443,7 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({
                       setComponents([]);
                       setComponentGroups([]);
                     }}
+                    className="cursor-pointer"
                   >
                     Change
                   </Button>
@@ -455,11 +456,16 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({
                 <Button
                   onClick={() => setShowGroupForm(true)}
                   disabled={loading}
+                  className="cursor-pointer"
                 >
                   <PlusCircle className="mr-2 h-4 w-4" /> New Group
                 </Button>
                 {currentGroup && (
-                  <Button onClick={createComponent} disabled={loading}>
+                  <Button
+                    onClick={createComponent}
+                    disabled={loading}
+                    className="cursor-pointer"
+                  >
                     <PlusCircle className="mr-2 h-4 w-4" /> New Component
                   </Button>
                 )}
@@ -469,6 +475,7 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({
                     currentGroup ? fetchComponents : fetchComponentGroups
                   }
                   disabled={loading}
+                  className="cursor-pointer"
                 >
                   <RefreshCw className="mr-2 h-4 w-4" /> Refresh
                 </Button>
@@ -617,7 +624,8 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({
                                   e.stopPropagation();
                                   deleteComponentGroup(group.name);
                                 }}
-                                className="opacity-60 hover:opacity-100"
+                                className="opacity-60 hover:opacity-100 cursor-pointer"
+                                title="Delete Group"
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
@@ -711,6 +719,7 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({
                                           getComponentDetails(componentName)
                                         }
                                         title="Edit"
+                                        className="cursor-pointer"
                                       >
                                         <Edit className="h-4 w-4" />
                                       </Button>
@@ -722,6 +731,7 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({
                                             deleteComponent(componentName)
                                           }
                                           title="Delete"
+                                          className="cursor-pointer"
                                         >
                                           <Trash2 className="h-4 w-4" />
                                         </Button>
@@ -733,6 +743,7 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({
                                           exportComponent(component)
                                         }
                                         title="Export"
+                                        className="cursor-pointer"
                                       >
                                         <Copy className="h-4 w-4" />
                                       </Button>
