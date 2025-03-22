@@ -509,9 +509,15 @@ const ComponentEditor: React.FC<ComponentEditorProps> = ({
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <div className="px-6 pt-6 border-b">
           <TabsList className="w-full grid grid-cols-3">
-            <TabsTrigger value="basic">Basic Information</TabsTrigger>
-            <TabsTrigger value="parameters">Parameters</TabsTrigger>
-            <TabsTrigger value="fieldgroups">Field Groups</TabsTrigger>
+            <TabsTrigger value="basic" className="cursor-pointer">
+              Basic Information
+            </TabsTrigger>
+            <TabsTrigger value="parameters" className="cursor-pointer">
+              Parameters
+            </TabsTrigger>
+            <TabsTrigger value="fieldgroups" className="cursor-pointer">
+              Field Groups
+            </TabsTrigger>
           </TabsList>
         </div>
 
