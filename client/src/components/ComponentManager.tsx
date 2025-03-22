@@ -1,44 +1,53 @@
-import { useEffect, useState } from "react";
-import { 
-  PlusCircle, 
-  RefreshCw, 
-  Edit, 
-  Trash2, 
-  Copy, 
-  Download, 
-  CheckCircle2, 
-  X
-} from "lucide-react";
-import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
-import ComponentEditor from "./ComponentEditor";
-import { 
-  Component, 
-  ComponentGroup, 
-  ComponentManagerProps, 
-  ApiRequest 
+import {
+  CheckCircle2,
+  Copy,
+  Download,
+  Edit,
+  PlusCircle,
+  RefreshCw,
+  Trash2,
+  X,
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import {
+  ApiRequest,
+  Component,
+  ComponentGroup,
+  ComponentManagerProps,
 } from "../types";
+import ComponentEditor from "./ComponentEditor";
 
-const ComponentManager: React.FC<ComponentManagerProps> = ({ makeApiRequest }) => {
+const ComponentManager: React.FC<ComponentManagerProps> = ({
+  makeApiRequest,
+}) => {
   const [componentGroups, setComponentGroups] = useState<ComponentGroup[]>([]);
   const [components, setComponents] = useState<Component[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [showEditor, setShowEditor] = useState<boolean>(false);
-  const [editingComponent, setEditingComponent] = useState<Component | null>(null);
+  const [editingComponent, setEditingComponent] = useState<Component | null>(
+    null
+  );
   const [currentGroup, setCurrentGroup] = useState<string>("");
   const [channelId, setChannelId] = useState<string>("");
   const [activeChannelId, setActiveChannelId] = useState<string>("");
@@ -49,7 +58,7 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({ makeApiRequest }) =
     hidden: false,
     system: false,
   });
-  
+
   // Using Sonner toast directly
 
   // Fetch component groups when ACTIVE channel ID changes
@@ -73,13 +82,13 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({ makeApiRequest }) =
     setLoading(true);
     try {
       const params: ApiRequest = {
-        section: 'components',
-        operation: 'getGroups',
+        section: "components",
+        operation: "getGroups",
         channelId: activeChannelId,
-        brxHost: '',
-        authToken: '',
+        brxHost: "",
+        authToken: "",
       };
-      
+
       const result = await makeApiRequest(params);
 
       if (result.success && result.data) {
@@ -102,14 +111,14 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({ makeApiRequest }) =
     setLoading(true);
     try {
       const params: ApiRequest = {
-        section: 'components',
-        operation: 'getComponents',
+        section: "components",
+        operation: "getComponents",
         channelId: activeChannelId,
         componentGroup: currentGroup,
-        brxHost: '',
-        authToken: '',
+        brxHost: "",
+        authToken: "",
       };
-      
+
       const result = await makeApiRequest(params);
 
       if (result.success && result.data) {
@@ -127,15 +136,15 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({ makeApiRequest }) =
     setLoading(true);
     try {
       const params: ApiRequest = {
-        section: 'components',
-        operation: 'getComponent',
+        section: "components",
+        operation: "getComponent",
         channelId: activeChannelId,
         componentGroup: currentGroup,
         resourceId: componentName,
-        brxHost: '',
-        authToken: '',
+        brxHost: "",
+        authToken: "",
       };
-      
+
       const result = await makeApiRequest(params);
 
       if (result.success && result.data) {
@@ -169,15 +178,15 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({ makeApiRequest }) =
     setLoading(true);
     try {
       const params: ApiRequest = {
-        section: 'components',
-        operation: 'deleteComponent',
+        section: "components",
+        operation: "deleteComponent",
         channelId: activeChannelId,
         componentGroup: currentGroup,
         resourceId: componentName,
-        brxHost: '',
-        authToken: '',
+        brxHost: "",
+        authToken: "",
       };
-      
+
       const result = await makeApiRequest(params);
 
       if (result.success) {
@@ -209,20 +218,24 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({ makeApiRequest }) =
       const resourceId = component.name || component.id.split("/")[1];
 
       const params: ApiRequest = {
-        section: 'components',
+        section: "components",
         operation,
         channelId: activeChannelId,
         componentGroup: currentGroup,
         resourceId,
         resourceData: component,
-        brxHost: '',
-        authToken: '',
+        brxHost: "",
+        authToken: "",
       };
-      
+
       const result = await makeApiRequest(params);
 
       if (result.success) {
-        toast.success(`Component ${operation === "createComponent" ? "created" : "updated"} successfully`);
+        toast.success(
+          `Component ${
+            operation === "createComponent" ? "created" : "updated"
+          } successfully`
+        );
         setShowEditor(false);
         fetchComponents();
       }
@@ -244,18 +257,18 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({ makeApiRequest }) =
     setLoading(true);
     try {
       const params: ApiRequest = {
-        section: 'components',
-        operation: 'createGroup',
+        section: "components",
+        operation: "createGroup",
         channelId: activeChannelId,
         componentGroup: newGroup.name,
         resourceData: {
           hidden: newGroup.hidden,
           system: newGroup.system,
         },
-        brxHost: '',
-        authToken: '',
+        brxHost: "",
+        authToken: "",
       };
-      
+
       const result = await makeApiRequest(params);
 
       if (result.success) {
@@ -286,14 +299,14 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({ makeApiRequest }) =
     setLoading(true);
     try {
       const params: ApiRequest = {
-        section: 'components',
-        operation: 'deleteGroup',
+        section: "components",
+        operation: "deleteGroup",
         channelId: activeChannelId,
         componentGroup: groupName,
-        brxHost: '',
-        authToken: '',
+        brxHost: "",
+        authToken: "",
       };
-      
+
       const result = await makeApiRequest(params);
 
       if (result.success) {
@@ -323,7 +336,7 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({ makeApiRequest }) =
   // Copy JSON to clipboard
   const copyToClipboard = () => {
     if (!jsonExport) return;
-    
+
     navigator.clipboard
       .writeText(JSON.stringify(jsonExport, null, 2))
       .then(() => {
@@ -337,7 +350,7 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({ makeApiRequest }) =
   // Download JSON file
   const downloadJson = () => {
     if (!jsonExport) return;
-    
+
     const dataStr =
       "data:text/json;charset=utf-8," +
       encodeURIComponent(JSON.stringify(jsonExport, null, 2));
@@ -345,7 +358,7 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({ makeApiRequest }) =
     downloadAnchorNode.setAttribute("href", dataStr);
     downloadAnchorNode.setAttribute(
       "download",
-      `${jsonExport.name || jsonExport.id.split('/')[1] || "component"}.json`
+      `${jsonExport.name || jsonExport.id.split("/")[1] || "component"}.json`
     );
     document.body.appendChild(downloadAnchorNode);
     downloadAnchorNode.click();
@@ -421,9 +434,9 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({ makeApiRequest }) =
                   <Badge variant="outline" className="px-3 py-1">
                     Channel: {activeChannelId}
                   </Badge>
-                  <Button 
-                    variant="link" 
-                    size="sm" 
+                  <Button
+                    variant="link"
+                    size="sm"
                     onClick={() => {
                       setActiveChannelId("");
                       setCurrentGroup("");
@@ -439,7 +452,10 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({ makeApiRequest }) =
 
             {activeChannelId && (
               <div className="flex space-x-3">
-                <Button onClick={() => setShowGroupForm(true)} disabled={loading}>
+                <Button
+                  onClick={() => setShowGroupForm(true)}
+                  disabled={loading}
+                >
                   <PlusCircle className="mr-2 h-4 w-4" /> New Group
                 </Button>
                 {currentGroup && (
@@ -447,9 +463,11 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({ makeApiRequest }) =
                     <PlusCircle className="mr-2 h-4 w-4" /> New Component
                   </Button>
                 )}
-                <Button 
-                  variant="outline" 
-                  onClick={currentGroup ? fetchComponents : fetchComponentGroups} 
+                <Button
+                  variant="outline"
+                  onClick={
+                    currentGroup ? fetchComponents : fetchComponentGroups
+                  }
                   disabled={loading}
                 >
                   <RefreshCw className="mr-2 h-4 w-4" /> Refresh
@@ -461,7 +479,9 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({ makeApiRequest }) =
           {showGroupForm && (
             <Card className="mb-6">
               <CardHeader>
-                <CardTitle className="text-base font-medium">New Component Group</CardTitle>
+                <CardTitle className="text-base font-medium">
+                  New Component Group
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-4">
@@ -479,23 +499,35 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({ makeApiRequest }) =
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="flex items-center space-x-2">
-                      <Checkbox 
+                      <Checkbox
                         id="hidden"
                         checked={newGroup.hidden}
-                        onCheckedChange={(checked) => 
-                          handleNewGroupCheckboxChange('hidden', checked as boolean)}
+                        onCheckedChange={(checked) =>
+                          handleNewGroupCheckboxChange(
+                            "hidden",
+                            checked as boolean
+                          )
+                        }
                       />
-                      <Label htmlFor="hidden" className="cursor-pointer">Hidden</Label>
+                      <Label htmlFor="hidden" className="cursor-pointer">
+                        Hidden
+                      </Label>
                     </div>
 
                     <div className="flex items-center space-x-2">
-                      <Checkbox 
+                      <Checkbox
                         id="system"
                         checked={newGroup.system}
-                        onCheckedChange={(checked) => 
-                          handleNewGroupCheckboxChange('system', checked as boolean)}
+                        onCheckedChange={(checked) =>
+                          handleNewGroupCheckboxChange(
+                            "system",
+                            checked as boolean
+                          )
+                        }
                       />
-                      <Label htmlFor="system" className="cursor-pointer">System</Label>
+                      <Label htmlFor="system" className="cursor-pointer">
+                        System
+                      </Label>
                     </div>
                   </div>
                 </div>
@@ -526,12 +558,16 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({ makeApiRequest }) =
               <div className="col-span-1">
                 <Card className="h-full">
                   <CardHeader>
-                    <CardTitle className="text-sm font-medium">Component Groups</CardTitle>
+                    <CardTitle className="text-sm font-medium">
+                      Component Groups
+                    </CardTitle>
                   </CardHeader>
                   <div className="overflow-y-auto max-h-[calc(100vh-220px)]">
                     {componentGroups.length === 0 ? (
                       <div className="p-6 text-center">
-                        <p className="text-muted-foreground text-sm mb-4">No component groups found.</p>
+                        <p className="text-muted-foreground text-sm mb-4">
+                          No component groups found.
+                        </p>
                         <Button
                           variant="outline"
                           size="sm"
@@ -551,13 +587,25 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({ makeApiRequest }) =
                             onClick={() => setCurrentGroup(group.name)}
                           >
                             <div className="flex flex-col">
-                              <span className="text-sm font-medium">{group.name}</span>
+                              <span className="text-sm font-medium">
+                                {group.name}
+                              </span>
                               <div className="flex space-x-1 mt-1">
                                 {group.hidden && (
-                                  <Badge variant="outline" className="text-xs py-0">Hidden</Badge>
+                                  <Badge
+                                    variant="outline"
+                                    className="text-xs py-0"
+                                  >
+                                    Hidden
+                                  </Badge>
                                 )}
                                 {group.system && (
-                                  <Badge variant="secondary" className="text-xs py-0">System</Badge>
+                                  <Badge
+                                    variant="secondary"
+                                    className="text-xs py-0"
+                                  >
+                                    System
+                                  </Badge>
                                 )}
                               </div>
                             </div>
@@ -587,7 +635,8 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({ makeApiRequest }) =
                   {!currentGroup ? (
                     <div className="flex flex-col items-center justify-center h-full p-8">
                       <p className="text-muted-foreground mb-4">
-                        Select a component group from the sidebar or create a new one.
+                        Select a component group from the sidebar or create a
+                        new one.
                       </p>
                     </div>
                   ) : loading ? (
@@ -606,7 +655,9 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({ makeApiRequest }) =
                   ) : (
                     <>
                       <CardHeader>
-                        <CardTitle className="text-base font-medium">Components in {currentGroup}</CardTitle>
+                        <CardTitle className="text-base font-medium">
+                          Components in {currentGroup}
+                        </CardTitle>
                       </CardHeader>
                       <CardContent className="p-0">
                         <Table>
@@ -616,26 +667,49 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({ makeApiRequest }) =
                               <TableHead>Label</TableHead>
                               <TableHead>Type</TableHead>
                               <TableHead>Hidden</TableHead>
-                              <TableHead className="text-right">Actions</TableHead>
+                              <TableHead className="text-right">
+                                Actions
+                              </TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
                             {components.map((component) => {
                               const componentName = component.id.split("/")[1];
                               return (
-                                <TableRow key={component.id}>
-                                  <TableCell className="font-medium">{componentName}</TableCell>
-                                  <TableCell>{component.label || "-"}</TableCell>
-                                  <TableCell>{component.ctype || "-"}</TableCell>
-                                  <TableCell>
-                                    {component.hidden ? <CheckCircle2 className="h-4 w-4 text-primary" /> : <X className="h-4 w-4 text-muted-foreground" />}
+                                <TableRow
+                                  key={component.id}
+                                  className="cursor-pointer hover:bg-muted/50"
+                                  onClick={() =>
+                                    getComponentDetails(componentName)
+                                  }
+                                >
+                                  <TableCell className="font-medium">
+                                    {componentName}
                                   </TableCell>
-                                  <TableCell className="text-right">
+                                  <TableCell>
+                                    {component.label || "-"}
+                                  </TableCell>
+                                  <TableCell>
+                                    {component.ctype || "-"}
+                                  </TableCell>
+                                  <TableCell>
+                                    {component.hidden ? (
+                                      <CheckCircle2 className="h-4 w-4 text-primary" />
+                                    ) : (
+                                      <X className="h-4 w-4 text-muted-foreground" />
+                                    )}
+                                  </TableCell>
+                                  <TableCell
+                                    className="text-right"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
                                     <div className="flex justify-end space-x-2">
                                       <Button
                                         variant="ghost"
                                         size="icon"
-                                        onClick={() => getComponentDetails(componentName)}
+                                        onClick={() =>
+                                          getComponentDetails(componentName)
+                                        }
                                         title="Edit"
                                       >
                                         <Edit className="h-4 w-4" />
@@ -644,7 +718,9 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({ makeApiRequest }) =
                                         <Button
                                           variant="ghost"
                                           size="icon"
-                                          onClick={() => deleteComponent(componentName)}
+                                          onClick={() =>
+                                            deleteComponent(componentName)
+                                          }
                                           title="Delete"
                                         >
                                           <Trash2 className="h-4 w-4" />
@@ -653,7 +729,9 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({ makeApiRequest }) =
                                       <Button
                                         variant="ghost"
                                         size="icon"
-                                        onClick={() => exportComponent(component)}
+                                        onClick={() =>
+                                          exportComponent(component)
+                                        }
                                         title="Export"
                                       >
                                         <Copy className="h-4 w-4" />
@@ -674,13 +752,20 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({ makeApiRequest }) =
           )}
 
           {jsonExport && (
-            <Dialog open={!!jsonExport} onOpenChange={(open) => !open && setJsonExport(null)}>
+            <Dialog
+              open={!!jsonExport}
+              onOpenChange={(open) => !open && setJsonExport(null)}
+            >
               <DialogContent className="max-w-4xl max-h-[80vh] flex flex-col">
                 <DialogHeader>
                   <DialogTitle>JSON Export: {jsonExport.id}</DialogTitle>
                 </DialogHeader>
                 <div className="flex justify-end space-x-2 mb-4">
-                  <Button variant="secondary" size="sm" onClick={copyToClipboard}>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={copyToClipboard}
+                  >
                     <Copy className="mr-2 h-4 w-4" /> Copy
                   </Button>
                   <Button variant="secondary" size="sm" onClick={downloadJson}>
@@ -688,7 +773,9 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({ makeApiRequest }) =
                   </Button>
                 </div>
                 <div className="flex-grow overflow-y-auto p-4 bg-muted rounded-md">
-                  <pre className="text-xs">{JSON.stringify(jsonExport, null, 2)}</pre>
+                  <pre className="text-xs">
+                    {JSON.stringify(jsonExport, null, 2)}
+                  </pre>
                 </div>
               </DialogContent>
             </Dialog>
