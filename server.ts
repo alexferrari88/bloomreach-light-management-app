@@ -1,8 +1,8 @@
 // server.ts
-import express, { Request, Response } from "express";
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
-import path from "path";
 import cors from "cors";
+import express, { Request, Response } from "express";
+import path from "path";
 
 // Define interface for API request
 interface BloomreachApiRequest {
@@ -12,7 +12,7 @@ interface BloomreachApiRequest {
   operation: string;
   resourceId?: string;
   resourceData?: any;
-  contentTypeMode?: string;
+  contentTypeMode?: "core" | "development";
   channelId?: string;
   componentGroup?: string;
 }
@@ -70,7 +70,9 @@ app.post("/api/execute", async (req: Request, res: Response) => {
             return res
               .status(400)
               .json({ success: false, error: "Resource ID is required" });
-          apiUrl = `${baseUrl}/${resourceId}`;
+          // if resourceId is "group:name", then it should become "group-name"
+          const resourcePath = resourceId.replace(":", "-");
+          apiUrl = `${baseUrl}/${resourcePath}`;
           break;
         case "create":
           apiUrl = baseUrl;
