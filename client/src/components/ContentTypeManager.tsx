@@ -1,10 +1,6 @@
-import { useState, useEffect } from 'react';
-import { PlusCircle, RefreshCw, Edit, Trash2, Copy, Download } from 'lucide-react';
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   Table,
   TableBody,
@@ -13,8 +9,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Copy, Download, Edit, PlusCircle, RefreshCw, Trash2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { toast } from "sonner";
+import { ApiRequest, ContentType, ContentTypeManagerProps } from '../types';
 import ContentTypeEditor from './ContentTypeEditor';
-import { ContentType, ContentTypeManagerProps, ApiRequest } from '../types';
 
 const ContentTypeManager: React.FC<ContentTypeManagerProps> = ({ makeApiRequest }) => {
   const [contentTypes, setContentTypes] = useState<ContentType[]>([]);
@@ -249,39 +249,43 @@ const ContentTypeManager: React.FC<ContentTypeManagerProps> = ({ makeApiRequest 
                   </TableHeader>
                   <TableBody>
                     {contentTypes.map((contentType) => (
-                      <TableRow key={contentType.id || contentType.name}>
-                        <TableCell className="font-medium">{contentType.id || contentType.name}</TableCell>
-                        <TableCell>{contentType.displayName || '-'}</TableCell>
-                        <TableCell className="max-w-md truncate">{contentType.description || '-'}</TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end space-x-2">
-                            <Button 
-                              variant="ghost" 
-                              size="icon"
-                              onClick={() => getContentTypeDetails(contentType.id || contentType.name)}
-                              title="Edit"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="icon"
-                              onClick={() => deleteContentType(contentType.id || contentType.name)}
-                              title="Delete"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="icon"
-                              onClick={() => exportContentType(contentType)}
-                              title="Export"
-                            >
-                              <Copy className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
+                      <TableRow 
+                      key={contentType.id || contentType.name}
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => getContentTypeDetails(contentType.id || contentType.name)}
+                    >
+                      <TableCell className="font-medium">{contentType.id || contentType.name}</TableCell>
+                      <TableCell>{contentType.displayName || '-'}</TableCell>
+                      <TableCell className="max-w-md truncate">{contentType.description || '-'}</TableCell>
+                      <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex justify-end space-x-2">
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={() => getContentTypeDetails(contentType.id || contentType.name)}
+                            title="Edit"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={() => deleteContentType(contentType.id || contentType.name)}
+                            title="Delete"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={() => exportContentType(contentType)}
+                            title="Export"
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
                     ))}
                   </TableBody>
                 </Table>
