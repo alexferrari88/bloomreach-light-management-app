@@ -4,11 +4,11 @@
 export interface ApiRequest {
   brxHost: string;
   authToken: string;
-  section: 'contentTypes' | 'components';
+  section: "contentTypes" | "components";
   operation: string;
   resourceId?: string;
   resourceData?: any;
-  contentTypeMode?: 'core' | 'development';
+  contentTypeMode?: "core" | "development";
   channelId?: string;
   componentGroup?: string;
 }
@@ -39,7 +39,17 @@ export interface ContentType {
 export interface Property {
   name: string;
   displayName?: string;
-  type: 'String' | 'Text' | 'Html' | 'Boolean' | 'Long' | 'Double' | 'Date' | 'Link' | 'Image' | 'Reference';
+  type:
+    | "String"
+    | "Text"
+    | "Html"
+    | "Boolean"
+    | "Long"
+    | "Double"
+    | "Date"
+    | "Link"
+    | "Image"
+    | "Reference";
   multiple?: boolean;
   required?: boolean;
 }
@@ -70,7 +80,7 @@ export interface Component {
 
 export interface Parameter {
   name: string;
-  valueType: 'string' | 'calendar' | 'boolean' | 'integer' | 'number';
+  valueType: "string" | "calendar" | "boolean" | "integer" | "number";
   required: boolean;
   hidden: boolean;
   overlay: boolean;
@@ -81,7 +91,7 @@ export interface Parameter {
 }
 
 export interface ParameterConfig {
-  type: 'contentpath' | 'dropdown' | 'imagesetpath';
+  type: "contentpath" | "dropdown" | "imagesetpath";
   pickerConfiguration?: string;
   pickerInitialPath?: string;
   pickerRememberLastVisited?: boolean;
@@ -101,12 +111,19 @@ export interface FieldGroup {
 
 // Change History Types
 export interface Change {
-  action: 'CREATE' | 'UPDATE' | 'DELETE';
+  action: "CREATE" | "UPDATE" | "DELETE";
   entityType: string;
   entityName: string;
   entityData?: any;
   previousData?: any;
   timestamp: string;
+}
+
+export interface ChangeHistoryProps {
+  changes: Change[];
+  onClear: () => void;
+  onExport: () => void;
+  onDownloadModifiedFiles: () => void;
 }
 
 // React Component Props Types
@@ -119,7 +136,7 @@ export interface ContentTypeEditorProps {
   contentType: ContentType | null;
   onSave: (contentType: ContentType) => void;
   onCancel: () => void;
-  mode: 'core' | 'development';
+  mode: "core" | "development";
 }
 
 export interface ComponentEditorProps {
