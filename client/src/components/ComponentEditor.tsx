@@ -1,7 +1,32 @@
-// src/components/ComponentEditor.tsx
-import React, { useState, useEffect, ChangeEvent } from 'react';
-import { FiPlus, FiEdit2, FiTrash2, FiSave, FiX } from 'react-icons/fi';
-import './ComponentEditor.css';
+import { useState, useEffect, ChangeEvent } from 'react';
+import { Save, X, PlusCircle, Edit2, Trash2 } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 import { 
   Component, 
   ComponentEditorProps, 
@@ -51,6 +76,7 @@ const ComponentEditor: React.FC<ComponentEditorProps> = ({ component, onSave, on
   const [editingParameterIndex, setEditingParameterIndex] = useState<number>(-1);
   const [editingFieldGroupIndex, setEditingFieldGroupIndex] = useState<number>(-1);
   const [configType, setConfigType] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<string>("basic");
 
   // Available parameter types
   const parameterTypes = [
@@ -88,29 +114,48 @@ const ComponentEditor: React.FC<ComponentEditorProps> = ({ component, onSave, on
   
   // Handle changes to the component form fields
   const handleComponentChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value, type } = e.target;
-    const checked = (e.target as HTMLInputElement).checked;
-    
+    const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: value
+    }));
+  };
+  
+  // Handle checkbox changes to the component form fields
+  const handleComponentCheckboxChange = (name: string, checked: boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      [name]: checked
     }));
   };
   
   // Handle changes to the current parameter being edited
   const handleParameterChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target;
-    const checked = (e.target as HTMLInputElement).checked;
-    
+    const { name, value } = e.target;
     setCurrentParameter(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: value
+    }));
+  };
+
+  // Handle checkbox changes to parameters
+  const handleParameterCheckboxChange = (name: string, checked: boolean) => {
+    setCurrentParameter(prev => ({
+      ...prev,
+      [name]: checked
+    }));
+  };
+
+  // Handle select changes
+  const handleParameterSelectChange = (name: string, value: string) => {
+    setCurrentParameter(prev => ({
+      ...prev,
+      [name]: value
     }));
   };
 
   // Handle changes to parameter config type
-  const handleConfigTypeChange = (e: ChangeEvent<HTMLSelectElement>) => {
-    const { value } = e.target;
+  const handleConfigTypeChange = (value: string) => {
     setConfigType(value);
     
     // Initialize config object based on selected type
@@ -151,8 +196,7 @@ const ComponentEditor: React.FC<ComponentEditorProps> = ({ component, onSave, on
 
   // Handle changes to parameter config properties
   const handleConfigChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target;
-    const checked = (e.target as HTMLInputElement).checked;
+    const { name, value } = e.target;
     
     if (!currentParameter.config) return;
     
@@ -160,7 +204,20 @@ const ComponentEditor: React.FC<ComponentEditorProps> = ({ component, onSave, on
       ...prev,
       config: prev.config ? {
         ...prev.config,
-        [name]: type === 'checkbox' ? checked : value
+        [name]: value
+      } : null
+    }));
+  };
+
+  // Handle checkbox changes to config
+  const handleConfigCheckboxChange = (name: string, checked: boolean) => {
+    if (!currentParameter.config) return;
+    
+    setCurrentParameter(prev => ({
+      ...prev,
+      config: prev.config ? {
+        ...prev.config,
+        [name]: checked
       } : null
     }));
   };
@@ -402,689 +459,677 @@ const ComponentEditor: React.FC<ComponentEditorProps> = ({ component, onSave, on
   };
   
   return (
-    <div className="component-editor">
-      <div className="editor-header">
-        <h2>{component ? 'Edit Component' : 'Create Component'}</h2>
-        <div className="editor-actions">
-          <button className="btn btn-primary" onClick={() => handleSubmit({ preventDefault: () => {} } as any)}>
-            <FiSave /> Save
-          </button>
-          <button className="btn btn-outline" onClick={onCancel}>
-            <FiX /> Cancel
-          </button>
+    <div className="bg-card rounded-lg border shadow-sm overflow-hidden">
+      <div className="flex justify-between items-center p-4 border-b sticky top-0 bg-card z-10">
+        <h2 className="text-xl font-semibold">{component ? 'Edit Component' : 'Create Component'}</h2>
+        <div className="flex space-x-3">
+          <Button onClick={() => handleSubmit({ preventDefault: () => {} } as any)}>
+            <Save className="mr-2 h-4 w-4" /> Save
+          </Button>
+          <Button variant="outline" onClick={onCancel}>
+            <X className="mr-2 h-4 w-4" /> Cancel
+          </Button>
         </div>
       </div>
       
-      <form onSubmit={handleSubmit}>
-        <div className="form-section">
-          <h3>Basic Information</h3>
-          
-          {component ? (
-            <div className="form-group">
-              <label htmlFor="id">ID</label>
-              <input
-                type="text"
-                id="id"
-                name="id"
-                value={formData.id}
-                onChange={handleComponentChange}
-                disabled={true}
-              />
-              <small>Format: group/name</small>
-            </div>
-          ) : (
-            <div className="form-group">
-              <label htmlFor="componentName">Component Name*</label>
-              <input
-                type="text"
-                id="componentName"
-                name="componentName"
-                onChange={handleComponentNameChange}
-                placeholder="e.g. banner, video, carousel"
-                required
-              />
-              <small>This will be part of the component ID: {groupName}/<em>name</em></small>
-            </div>
-          )}
-          
-          <div className="form-group">
-            <label htmlFor="extends">Extends</label>
-            <input
-              type="text"
-              id="extends"
-              name="extends"
-              value={formData.extends}
-              onChange={handleComponentChange}
-              placeholder="e.g. base/component"
-            />
-            <small>Component definition this extends from</small>
-          </div>
-          
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="label">Label</label>
-              <input
-                type="text"
-                id="label"
-                name="label"
-                value={formData.label}
-                onChange={handleComponentChange}
-                placeholder="e.g. Banner, Video"
-              />
-              <small>Display name in the UI</small>
-            </div>
-            
-            <div className="form-group">
-              <label htmlFor="ctype">Component Type</label>
-              <input
-                type="text"
-                id="ctype"
-                name="ctype"
-                value={formData.ctype}
-                onChange={handleComponentChange}
-                placeholder="e.g. Banner, Video"
-              />
-              <small>Frontend component type</small>
-            </div>
-          </div>
-          
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="xtype">XType</label>
-              <input
-                type="text"
-                id="xtype"
-                name="xtype"
-                value={formData.xtype || ''}
-                onChange={handleComponentChange}
-                placeholder="e.g. hst.span"
-              />
-              <small>Frontend layout type</small>
-            </div>
-            
-            <div className="form-group">
-              <label htmlFor="contentType">Content Type</label>
-              <input
-                type="text"
-                id="contentType"
-                name="contentType"
-                value={formData.contentType || ''}
-                onChange={handleComponentChange}
-                placeholder="e.g. brxsaas:banner"
-              />
-              <small>Content type for component content</small>
-            </div>
-          </div>
-          
-          <div className="form-group">
-            <label htmlFor="icon">Icon (Base64)</label>
-            <textarea
-              id="icon"
-              name="icon"
-              value={formData.icon || ''}
-              onChange={handleComponentChange}
-              placeholder="data:image/svg+xml;base64,..."
-              rows={2}
-            />
-            <small>Base64 encoded icon for this component</small>
-          </div>
-          
-          <div className="form-row checkbox-container">
-            <div className="form-group checkbox-group">
-              <div className="checkbox-row">
-                <label>
-                  <input
-                    type="checkbox"
-                    name="hidden"
-                    checked={formData.hidden}
-                    onChange={handleComponentChange}
-                  />
-                  Hidden
-                </label>
-                <small>Hide this component in the UI</small>
-              </div>
-            </div>
-            
-            <div className="form-group checkbox-group">
-              <div className="checkbox-row">
-                <label>
-                  <input
-                    type="checkbox"
-                    name="system"
-                    checked={formData.system}
-                    onChange={handleComponentChange}
-                  />
-                  System
-                </label>
-                <small>Mark as protected system component</small>
-              </div>
-            </div>
-          </div>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <div className="px-6 pt-6 border-b">
+          <TabsList className="w-full grid grid-cols-3">
+            <TabsTrigger value="basic">Basic Information</TabsTrigger>
+            <TabsTrigger value="parameters">Parameters</TabsTrigger>
+            <TabsTrigger value="fieldgroups">Field Groups</TabsTrigger>
+          </TabsList>
         </div>
         
-        <div className="form-section">
-          <h3>Parameters</h3>
-          
-          <div className="parameters-list">
-            {formData.parameters.length === 0 ? (
-              <div className="empty-parameters">
-                <p>No parameters defined yet. Add some below.</p>
+        <form onSubmit={handleSubmit}>
+          <TabsContent value="basic" className="p-6 space-y-6">
+            {component ? (
+              <div className="grid gap-2">
+                <Label htmlFor="id">ID</Label>
+                <Input
+                  id="id"
+                  name="id"
+                  value={formData.id}
+                  disabled={true}
+                />
+                <p className="text-xs text-muted-foreground">Format: group/name</p>
               </div>
             ) : (
-              <table className="parameters-table">
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Display Name</th>
-                    <th>Type</th>
-                    <th>Required</th>
-                    <th>Config Type</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {formData.parameters.map((parameter, index) => (
-                    <tr key={index}>
-                      <td>{parameter.name}</td>
-                      <td>{parameter.displayName || '-'}</td>
-                      <td>{parameter.valueType}</td>
-                      <td>{parameter.required ? 'Yes' : 'No'}</td>
-                      <td>{parameter.config?.type || '-'}</td>
-                      <td>
-                        <div className="action-buttons">
-                          <button 
-                            type="button"
-                            className="icon-btn edit"
-                            onClick={() => editParameter(index)}
-                            title="Edit"
-                          >
-                            <FiEdit2 />
-                          </button>
-                          <button 
-                            type="button"
-                            className="icon-btn delete"
-                            onClick={() => deleteParameter(index)}
-                            title="Delete"
-                          >
-                            <FiTrash2 />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
-          
-          <div className="parameter-form">
-            <h4>{editingParameterIndex >= 0 ? 'Edit Parameter' : 'Add Parameter'}</h4>
-            
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="parameterName">Name*</label>
-                <input
-                  type="text"
-                  id="parameterName"
-                  name="name"
-                  value={currentParameter.name}
-                  onChange={handleParameterChange}
-                  placeholder="e.g. url, document, title"
+              <div className="grid gap-2">
+                <Label htmlFor="componentName">Component Name*</Label>
+                <Input
+                  id="componentName"
+                  name="componentName"
+                  onChange={handleComponentNameChange}
+                  placeholder="e.g. banner, video, carousel"
+                  required
                 />
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="parameterDisplayName">Display Name</label>
-                <input
-                  type="text"
-                  id="parameterDisplayName"
-                  name="displayName"
-                  value={currentParameter.displayName || ''}
-                  onChange={handleParameterChange}
-                  placeholder="e.g. URL, Document, Title"
-                />
-              </div>
-            </div>
-            
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="parameterType">Type*</label>
-                <select
-                  id="parameterType"
-                  name="valueType"
-                  value={currentParameter.valueType}
-                  onChange={handleParameterChange}
-                >
-                  {parameterTypes.map(type => (
-                    <option key={type.value} value={type.value}>
-                      {type.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="parameterDefaultValue">Default Value</label>
-                <input
-                  type="text"
-                  id="parameterDefaultValue"
-                  name="defaultValue"
-                  value={currentParameter.defaultValue || ''}
-                  onChange={handleParameterChange}
-                  placeholder="Default value"
-                />
-              </div>
-            </div>
-            
-            <div className="form-row checkbox-container">
-              <div className="form-group checkbox-group">
-                <div className="checkbox-row">
-                  <label>
-                    <input
-                      type="checkbox"
-                      name="required"
-                      checked={currentParameter.required}
-                      onChange={handleParameterChange}
-                    />
-                    Required
-                  </label>
-                </div>
-              </div>
-              
-              <div className="form-group checkbox-group">
-                <div className="checkbox-row">
-                  <label>
-                    <input
-                      type="checkbox"
-                      name="hidden"
-                      checked={currentParameter.hidden}
-                      onChange={handleParameterChange}
-                    />
-                    Hidden
-                  </label>
-                </div>
-              </div>
-              
-              <div className="form-group checkbox-group">
-                <div className="checkbox-row">
-                  <label>
-                    <input
-                      type="checkbox"
-                      name="overlay"
-                      checked={currentParameter.overlay}
-                      onChange={handleParameterChange}
-                    />
-                    Overlay
-                  </label>
-                </div>
-              </div>
-              
-              <div className="form-group checkbox-group">
-                <div className="checkbox-row">
-                  <label>
-                    <input
-                      type="checkbox"
-                      name="system"
-                      checked={currentParameter.system}
-                      onChange={handleParameterChange}
-                    />
-                    System
-                  </label>
-                </div>
-              </div>
-            </div>
-            
-            <div className="config-section">
-              <div className="form-group">
-                <label htmlFor="configType">Config Type</label>
-                <select
-                  id="configType"
-                  name="configType"
-                  value={configType}
-                  onChange={handleConfigTypeChange}
-                >
-                  <option value="">None</option>
-                  <option value="contentpath">Content Path</option>
-                  <option value="dropdown">Dropdown</option>
-                  <option value="imagesetpath">Image Set Path</option>
-                </select>
-              </div>
-              
-              {configType === 'contentpath' && currentParameter.config && (
-                <div className="config-form">
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label htmlFor="pickerConfiguration">Picker Configuration</label>
-                      <input
-                        type="text"
-                        id="pickerConfiguration"
-                        name="pickerConfiguration"
-                        value={currentParameter.config.pickerConfiguration || ''}
-                        onChange={handleConfigChange}
-                        placeholder="e.g. cms-pickers/documents-only"
-                      />
-                    </div>
-                    
-                    <div className="form-group">
-                      <label htmlFor="pickerInitialPath">Initial Path</label>
-                      <input
-                        type="text"
-                        id="pickerInitialPath"
-                        name="pickerInitialPath"
-                        value={currentParameter.config.pickerInitialPath || ''}
-                        onChange={handleConfigChange}
-                        placeholder="e.g. banners"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label htmlFor="pickerSelectableNodeTypes">Selectable Node Types</label>
-                      <input
-                        type="text"
-                        id="pickerSelectableNodeTypes"
-                        name="pickerSelectableNodeTypes"
-                        value={currentParameter.config.pickerSelectableNodeTypes?.join(', ') || ''}
-                        onChange={handleNodeTypesChange}
-                        placeholder="e.g. banner, image, document"
-                      />
-                      <small>Comma-separated list of node types</small>
-                    </div>
-                    
-                    <div className="form-group checkbox-group">
-                      <div className="checkbox-row">
-                        <label>
-                          <input
-                            type="checkbox"
-                            name="pickerRememberLastVisited"
-                            checked={currentParameter.config.pickerRememberLastVisited || false}
-                            onChange={handleConfigChange}
-                          />
-                          Remember Last Visited
-                        </label>
-                      </div>
-                      
-                      <div className="checkbox-row">
-                        <label>
-                          <input
-                            type="checkbox"
-                            name="relative"
-                            checked={currentParameter.config.relative || false}
-                            onChange={handleConfigChange}
-                          />
-                          Relative Path
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-              
-              {configType === 'dropdown' && currentParameter.config && (
-                <div className="config-form">
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label htmlFor="sourceId">Source ID</label>
-                      <input
-                        type="text"
-                        id="sourceId"
-                        name="sourceId"
-                        value={currentParameter.config.sourceId || ''}
-                        onChange={handleConfigChange}
-                        placeholder="Source ID for the dropdown"
-                        required={configType === 'dropdown'}
-                      />
-                    </div>
-                    
-                    <div className="form-group">
-                      <label htmlFor="dropdownValues">Values</label>
-                      <input
-                        type="text"
-                        id="dropdownValues"
-                        name="dropdownValues"
-                        value={currentParameter.config.value?.join(', ') || ''}
-                        onChange={handleDropdownValuesChange}
-                        placeholder="e.g. value1, value2, value3"
-                      />
-                      <small>Comma-separated list of values</small>
-                    </div>
-                  </div>
-                </div>
-              )}
-              
-              {configType === 'imagesetpath' && currentParameter.config && (
-                <div className="config-form">
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label htmlFor="pickerConfiguration">Picker Configuration</label>
-                      <input
-                        type="text"
-                        id="pickerConfiguration"
-                        name="pickerConfiguration"
-                        value={currentParameter.config.pickerConfiguration || ''}
-                        onChange={handleConfigChange}
-                        placeholder="e.g. cms-pickers/images"
-                      />
-                    </div>
-                    
-                    <div className="form-group">
-                      <label htmlFor="pickerInitialPath">Initial Path</label>
-                      <input
-                        type="text"
-                        id="pickerInitialPath"
-                        name="pickerInitialPath"
-                        value={currentParameter.config.pickerInitialPath || ''}
-                        onChange={handleConfigChange}
-                        placeholder="e.g. gallery"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label htmlFor="previewVariant">Preview Variant</label>
-                      <input
-                        type="text"
-                        id="previewVariant"
-                        name="previewVariant"
-                        value={currentParameter.config.previewVariant || ''}
-                        onChange={handleConfigChange}
-                        placeholder="e.g. thumbnail"
-                      />
-                    </div>
-                    
-                    <div className="form-group checkbox-group">
-                      <div className="checkbox-row">
-                        <label>
-                          <input
-                            type="checkbox"
-                            name="pickerRememberLastVisited"
-                            checked={currentParameter.config.pickerRememberLastVisited || false}
-                            onChange={handleConfigChange}
-                          />
-                          Remember Last Visited
-                        </label>
-                      </div>
-                      
-                      <div className="checkbox-row">
-                        <label>
-                          <input
-                            type="checkbox"
-                            name="enableUpload"
-                            checked={currentParameter.config.enableUpload || false}
-                            onChange={handleConfigChange}
-                          />
-                          Enable Upload
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-            
-            <div className="parameter-actions">
-              <button 
-                type="button" 
-                className="btn btn-primary" 
-                onClick={addParameter}
-              >
-                {editingParameterIndex >= 0 ? (
-                  <>Update Parameter</>
-                ) : (
-                  <><FiPlus /> Add Parameter</>
-                )}
-              </button>
-              
-              {editingParameterIndex >= 0 && (
-                <button 
-                  type="button" 
-                  className="btn btn-outline" 
-                  onClick={cancelParameterEdit}
-                >
-                  Cancel
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-        
-        <div className="form-section">
-          <h3>Field Groups</h3>
-          
-          <div className="field-groups-list">
-            {formData.fieldGroups.length === 0 ? (
-              <div className="empty-field-groups">
-                <p>No field groups defined yet. Add some below.</p>
-              </div>
-            ) : (
-              <table className="field-groups-table">
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Display Name</th>
-                    <th>Parameters</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {formData.fieldGroups.map((group, index) => (
-                    <tr key={index}>
-                      <td>{group.name}</td>
-                      <td>{group.displayName || '-'}</td>
-                      <td className="parameters-cell">
-                        {group.parameters.length > 0 ? 
-                          group.parameters.join(', ') : 
-                          '-'
-                        }
-                      </td>
-                      <td>
-                        <div className="action-buttons">
-                          <button 
-                            type="button"
-                            className="icon-btn edit"
-                            onClick={() => editFieldGroup(index)}
-                            title="Edit"
-                          >
-                            <FiEdit2 />
-                          </button>
-                          <button 
-                            type="button"
-                            className="icon-btn delete"
-                            onClick={() => deleteFieldGroup(index)}
-                            title="Delete"
-                          >
-                            <FiTrash2 />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
-          
-          <div className="field-group-form">
-            <h4>{editingFieldGroupIndex >= 0 ? 'Edit Field Group' : 'Add Field Group'}</h4>
-            
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="fieldGroupName">Name*</label>
-                <input
-                  type="text"
-                  id="fieldGroupName"
-                  name="name"
-                  value={currentFieldGroup.name}
-                  onChange={handleFieldGroupChange}
-                  placeholder="e.g. basic-settings, advanced"
-                />
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="fieldGroupDisplayName">Display Name</label>
-                <input
-                  type="text"
-                  id="fieldGroupDisplayName"
-                  name="displayName"
-                  value={currentFieldGroup.displayName || ''}
-                  onChange={handleFieldGroupChange}
-                  placeholder="e.g. Basic Settings, Advanced"
-                />
-              </div>
-            </div>
-            
-            <div className="field-group-parameters">
-              <label>Parameters</label>
-              
-              {formData.parameters.length === 0 ? (
-                <p className="no-parameters">
-                  No parameters available. Add parameters first.
+                <p className="text-xs text-muted-foreground">
+                  This will be part of the component ID: {groupName}/<em>name</em>
                 </p>
+              </div>
+            )}
+            
+            <div className="grid gap-2">
+              <Label htmlFor="extends">Extends</Label>
+              <Input
+                id="extends"
+                name="extends"
+                value={formData.extends}
+                onChange={handleComponentChange}
+                placeholder="e.g. base/component"
+              />
+              <p className="text-xs text-muted-foreground">Component definition this extends from</p>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="label">Label</Label>
+                <Input
+                  id="label"
+                  name="label"
+                  value={formData.label || ''}
+                  onChange={handleComponentChange}
+                  placeholder="e.g. Banner, Video"
+                />
+                <p className="text-xs text-muted-foreground">Display name in the UI</p>
+              </div>
+              
+              <div className="grid gap-2">
+                <Label htmlFor="ctype">Component Type</Label>
+                <Input
+                  id="ctype"
+                  name="ctype"
+                  value={formData.ctype || ''}
+                  onChange={handleComponentChange}
+                  placeholder="e.g. Banner, Video"
+                />
+                <p className="text-xs text-muted-foreground">Frontend component type</p>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="xtype">XType</Label>
+                <Input
+                  id="xtype"
+                  name="xtype"
+                  value={formData.xtype || ''}
+                  onChange={handleComponentChange}
+                  placeholder="e.g. hst.span"
+                />
+                <p className="text-xs text-muted-foreground">Frontend layout type</p>
+              </div>
+              
+              <div className="grid gap-2">
+                <Label htmlFor="contentType">Content Type</Label>
+                <Input
+                  id="contentType"
+                  name="contentType"
+                  value={formData.contentType || ''}
+                  onChange={handleComponentChange}
+                  placeholder="e.g. brxsaas:banner"
+                />
+                <p className="text-xs text-muted-foreground">Content type for component content</p>
+              </div>
+            </div>
+            
+            <div className="grid gap-2">
+              <Label htmlFor="icon">Icon (Base64)</Label>
+              <Textarea
+                id="icon"
+                name="icon"
+                value={formData.icon || ''}
+                onChange={handleComponentChange}
+                placeholder="data:image/svg+xml;base64,..."
+                rows={2}
+              />
+              <p className="text-xs text-muted-foreground">Base64 encoded icon for this component</p>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="hidden"
+                  checked={formData.hidden}
+                  onCheckedChange={(checked) => 
+                    handleComponentCheckboxChange('hidden', checked as boolean)}
+                />
+                <div>
+                  <Label htmlFor="hidden" className="cursor-pointer">Hidden</Label>
+                  <p className="text-xs text-muted-foreground">Hide this component in the UI</p>
+                </div>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="system"
+                  checked={formData.system}
+                  onCheckedChange={(checked) => 
+                    handleComponentCheckboxChange('system', checked as boolean)}
+                />
+                <div>
+                  <Label htmlFor="system" className="cursor-pointer">System</Label>
+                  <p className="text-xs text-muted-foreground">Mark as protected system component</p>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="parameters" className="p-6">
+            <div className="mb-6">
+              {formData.parameters.length === 0 ? (
+                <div className="py-12 text-center bg-muted/50 rounded-lg">
+                  <p className="text-muted-foreground">No parameters defined yet. Add some below.</p>
+                </div>
               ) : (
-                <div className="checkbox-grid">
-                  {formData.parameters.map((param, index) => (
-                    <label key={index} className="checkbox-label">
-                      <input
-                        type="checkbox"
-                        checked={currentFieldGroup.parameters.includes(param.name)}
-                        onChange={() => handleFieldGroupParameterToggle(param.name)}
-                      />
-                      {param.name}
-                    </label>
-                  ))}
+                <div className="border rounded-lg overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Display Name</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Required</TableHead>
+                        <TableHead>Config Type</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {formData.parameters.map((parameter, index) => (
+                        <TableRow key={index}>
+                          <TableCell className="font-medium">{parameter.name}</TableCell>
+                          <TableCell>{parameter.displayName || '-'}</TableCell>
+                          <TableCell>{parameter.valueType}</TableCell>
+                          <TableCell>{parameter.required ? 'Yes' : 'No'}</TableCell>
+                          <TableCell>{parameter.config?.type || '-'}</TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end space-x-1">
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                onClick={() => editParameter(index)}
+                                title="Edit"
+                              >
+                                <Edit2 className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                onClick={() => deleteParameter(index)}
+                                title="Delete"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 </div>
               )}
             </div>
             
-            <div className="field-group-actions">
-              <button 
-                type="button" 
-                className="btn btn-primary" 
-                onClick={addFieldGroup}
-                disabled={formData.parameters.length === 0}
-              >
-                {editingFieldGroupIndex >= 0 ? (
-                  <>Update Field Group</>
-                ) : (
-                  <><FiPlus /> Add Field Group</>
-                )}
-              </button>
-              
-              {editingFieldGroupIndex >= 0 && (
-                <button 
-                  type="button" 
-                  className="btn btn-outline" 
-                  onClick={cancelFieldGroupEdit}
-                >
-                  Cancel
-                </button>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  {editingParameterIndex >= 0 ? 'Edit Parameter' : 'Add Parameter'}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="parameterName">Name*</Label>
+                    <Input
+                      id="parameterName"
+                      name="name"
+                      value={currentParameter.name}
+                      onChange={handleParameterChange}
+                      placeholder="e.g. url, document, title"
+                    />
+                  </div>
+                  
+                  <div className="grid gap-2">
+                    <Label htmlFor="parameterDisplayName">Display Name</Label>
+                    <Input
+                      id="parameterDisplayName"
+                      name="displayName"
+                      value={currentParameter.displayName || ''}
+                      onChange={handleParameterChange}
+                      placeholder="e.g. URL, Document, Title"
+                    />
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="parameterType">Type*</Label>
+                    <Select
+                      value={currentParameter.valueType}
+                      onValueChange={(value) => handleParameterSelectChange('valueType', value)}
+                    >
+                      <SelectTrigger id="parameterType">
+                        <SelectValue placeholder="Select type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {parameterTypes.map(type => (
+                          <SelectItem key={type.value} value={type.value}>
+                            {type.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="grid gap-2">
+                    <Label htmlFor="parameterDefaultValue">Default Value</Label>
+                    <Input
+                      id="parameterDefaultValue"
+                      name="defaultValue"
+                      value={currentParameter.defaultValue || ''}
+                      onChange={handleParameterChange}
+                      placeholder="Default value"
+                    />
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-4 gap-4">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="paramRequired"
+                      checked={currentParameter.required}
+                      onCheckedChange={(checked) => 
+                        handleParameterCheckboxChange('required', checked as boolean)}
+                    />
+                    <Label htmlFor="paramRequired" className="cursor-pointer">Required</Label>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="paramHidden"
+                      checked={currentParameter.hidden}
+                      onCheckedChange={(checked) => 
+                        handleParameterCheckboxChange('hidden', checked as boolean)}
+                    />
+                    <Label htmlFor="paramHidden" className="cursor-pointer">Hidden</Label>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="paramOverlay"
+                      checked={currentParameter.overlay}
+                      onCheckedChange={(checked) => 
+                        handleParameterCheckboxChange('overlay', checked as boolean)}
+                    />
+                    <Label htmlFor="paramOverlay" className="cursor-pointer">Overlay</Label>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="paramSystem"
+                      checked={currentParameter.system}
+                      onCheckedChange={(checked) => 
+                        handleParameterCheckboxChange('system', checked as boolean)}
+                    />
+                    <Label htmlFor="paramSystem" className="cursor-pointer">System</Label>
+                  </div>
+                </div>
+                
+                <div className="space-y-4 pt-4 border-t">
+                  <div className="grid gap-2">
+                    <Label htmlFor="configType">Config Type</Label>
+                    <Select
+                      value={configType}
+                      onValueChange={handleConfigTypeChange}
+                    >
+                      <SelectTrigger id="configType">
+                        <SelectValue placeholder="None" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">None</SelectItem>
+                        <SelectItem value="contentpath">Content Path</SelectItem>
+                        <SelectItem value="dropdown">Dropdown</SelectItem>
+                        <SelectItem value="imagesetpath">Image Set Path</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  {configType === 'contentpath' && currentParameter.config && (
+                    <Card className="border-dashed">
+                      <CardContent className="pt-6 space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="grid gap-2">
+                            <Label htmlFor="pickerConfiguration">Picker Configuration</Label>
+                            <Input
+                              id="pickerConfiguration"
+                              name="pickerConfiguration"
+                              value={currentParameter.config.pickerConfiguration || ''}
+                              onChange={handleConfigChange}
+                              placeholder="e.g. cms-pickers/documents-only"
+                            />
+                          </div>
+                          
+                          <div className="grid gap-2">
+                            <Label htmlFor="pickerInitialPath">Initial Path</Label>
+                            <Input
+                              id="pickerInitialPath"
+                              name="pickerInitialPath"
+                              value={currentParameter.config.pickerInitialPath || ''}
+                              onChange={handleConfigChange}
+                              placeholder="e.g. banners"
+                            />
+                          </div>
+                        </div>
+                        
+                        <div className="grid gap-2">
+                          <Label htmlFor="pickerSelectableNodeTypes">Selectable Node Types</Label>
+                          <Input
+                            id="pickerSelectableNodeTypes"
+                            name="pickerSelectableNodeTypes"
+                            value={currentParameter.config.pickerSelectableNodeTypes?.join(', ') || ''}
+                            onChange={handleNodeTypesChange}
+                            placeholder="e.g. banner, image, document"
+                          />
+                          <p className="text-xs text-muted-foreground">Comma-separated list of node types</p>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="flex items-center space-x-2">
+                            <Checkbox 
+                              id="pickerRememberLastVisited"
+                              checked={currentParameter.config.pickerRememberLastVisited || false}
+                              onCheckedChange={(checked) => 
+                                handleConfigCheckboxChange('pickerRememberLastVisited', checked as boolean)}
+                            />
+                            <Label htmlFor="pickerRememberLastVisited" className="cursor-pointer">
+                              Remember Last Visited
+                            </Label>
+                          </div>
+                          
+                          <div className="flex items-center space-x-2">
+                            <Checkbox 
+                              id="relative"
+                              checked={currentParameter.config.relative || false}
+                              onCheckedChange={(checked) => 
+                                handleConfigCheckboxChange('relative', checked as boolean)}
+                            />
+                            <Label htmlFor="relative" className="cursor-pointer">
+                              Relative Path
+                            </Label>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                  
+                  {configType === 'dropdown' && currentParameter.config && (
+                    <Card className="border-dashed">
+                      <CardContent className="pt-6 space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="grid gap-2">
+                            <Label htmlFor="sourceId">Source ID</Label>
+                            <Input
+                              id="sourceId"
+                              name="sourceId"
+                              value={currentParameter.config.sourceId || ''}
+                              onChange={handleConfigChange}
+                              placeholder="Source ID for the dropdown"
+                              required={configType === 'dropdown'}
+                            />
+                          </div>
+                          
+                          <div className="grid gap-2">
+                            <Label htmlFor="dropdownValues">Values</Label>
+                            <Input
+                              id="dropdownValues"
+                              name="dropdownValues"
+                              value={currentParameter.config.value?.join(', ') || ''}
+                              onChange={handleDropdownValuesChange}
+                              placeholder="e.g. value1, value2, value3"
+                            />
+                            <p className="text-xs text-muted-foreground">Comma-separated list of values</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                  
+                  {configType === 'imagesetpath' && currentParameter.config && (
+                    <Card className="border-dashed">
+                      <CardContent className="pt-6 space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="grid gap-2">
+                            <Label htmlFor="pickerConfiguration">Picker Configuration</Label>
+                            <Input
+                              id="pickerConfiguration"
+                              name="pickerConfiguration"
+                              value={currentParameter.config.pickerConfiguration || ''}
+                              onChange={handleConfigChange}
+                              placeholder="e.g. cms-pickers/images"
+                            />
+                          </div>
+                          
+                          <div className="grid gap-2">
+                            <Label htmlFor="pickerInitialPath">Initial Path</Label>
+                            <Input
+                              id="pickerInitialPath"
+                              name="pickerInitialPath"
+                              value={currentParameter.config.pickerInitialPath || ''}
+                              onChange={handleConfigChange}
+                              placeholder="e.g. gallery"
+                            />
+                          </div>
+                        </div>
+                        
+                        <div className="grid gap-2">
+                          <Label htmlFor="previewVariant">Preview Variant</Label>
+                          <Input
+                            id="previewVariant"
+                            name="previewVariant"
+                            value={currentParameter.config.previewVariant || ''}
+                            onChange={handleConfigChange}
+                            placeholder="e.g. thumbnail"
+                          />
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="flex items-center space-x-2">
+                            <Checkbox 
+                              id="pickerRememberLastVisited"
+                              checked={currentParameter.config.pickerRememberLastVisited || false}
+                              onCheckedChange={(checked) => 
+                                handleConfigCheckboxChange('pickerRememberLastVisited', checked as boolean)}
+                            />
+                            <Label htmlFor="pickerRememberLastVisited" className="cursor-pointer">
+                              Remember Last Visited
+                            </Label>
+                          </div>
+                          
+                          <div className="flex items-center space-x-2">
+                            <Checkbox 
+                              id="enableUpload"
+                              checked={currentParameter.config.enableUpload || false}
+                              onCheckedChange={(checked) => 
+                                handleConfigCheckboxChange('enableUpload', checked as boolean)}
+                            />
+                            <Label htmlFor="enableUpload" className="cursor-pointer">
+                              Enable Upload
+                            </Label>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+                
+                <div className="flex justify-end space-x-3">
+                  <Button 
+                    onClick={addParameter}
+                    disabled={!currentParameter.name}
+                  >
+                    {editingParameterIndex >= 0 ? (
+                      'Update Parameter'
+                    ) : (
+                      <>
+                        <PlusCircle className="mr-2 h-4 w-4" /> Add Parameter
+                      </>
+                    )}
+                  </Button>
+                  
+                  {editingParameterIndex >= 0 && (
+                    <Button 
+                      variant="outline" 
+                      onClick={cancelParameterEdit}
+                    >
+                      Cancel
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="fieldgroups" className="p-6">
+            <div className="mb-6">
+              {formData.fieldGroups.length === 0 ? (
+                <div className="py-12 text-center bg-muted/50 rounded-lg">
+                  <p className="text-muted-foreground">No field groups defined yet. Add some below.</p>
+                </div>
+              ) : (
+                <div className="border rounded-lg overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Display Name</TableHead>
+                        <TableHead>Parameters</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {formData.fieldGroups.map((group, index) => (
+                        <TableRow key={index}>
+                          <TableCell className="font-medium">{group.name}</TableCell>
+                          <TableCell>{group.displayName || '-'}</TableCell>
+                          <TableCell className="max-w-md truncate">
+                            {group.parameters.length > 0 ? 
+                              group.parameters.join(', ') : 
+                              '-'
+                            }
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end space-x-1">
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                onClick={() => editFieldGroup(index)}
+                                title="Edit"
+                              >
+                                <Edit2 className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                onClick={() => deleteFieldGroup(index)}
+                                title="Delete"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               )}
             </div>
-          </div>
-        </div>
-      </form>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  {editingFieldGroupIndex >= 0 ? 'Edit Field Group' : 'Add Field Group'}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="fieldGroupName">Name*</Label>
+                    <Input
+                      id="fieldGroupName"
+                      name="name"
+                      value={currentFieldGroup.name}
+                      onChange={handleFieldGroupChange}
+                      placeholder="e.g. basic-settings, advanced"
+                    />
+                  </div>
+                  
+                  <div className="grid gap-2">
+                    <Label htmlFor="fieldGroupDisplayName">Display Name</Label>
+                    <Input
+                      id="fieldGroupDisplayName"
+                      name="displayName"
+                      value={currentFieldGroup.displayName || ''}
+                      onChange={handleFieldGroupChange}
+                      placeholder="e.g. Basic Settings, Advanced"
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>Parameters</Label>
+                  
+                  {formData.parameters.length === 0 ? (
+                    <p className="text-sm text-muted-foreground py-2">
+                      No parameters available. Add parameters first.
+                    </p>
+                  ) : (
+                    <div className="grid grid-cols-3 gap-2 p-2 border rounded-md">
+                      {formData.parameters.map((param, index) => (
+                        <div key={index} className="flex items-center space-x-2">
+                          <Checkbox 
+                            id={`param-${index}`}
+                            checked={currentFieldGroup.parameters.includes(param.name)}
+                            onCheckedChange={() => handleFieldGroupParameterToggle(param.name)}
+                          />
+                          <Label htmlFor={`param-${index}`} className="cursor-pointer">
+                            {param.name}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                
+                <div className="flex justify-end space-x-3">
+                  <Button 
+                    onClick={addFieldGroup}
+                    disabled={!currentFieldGroup.name || formData.parameters.length === 0}
+                  >
+                    {editingFieldGroupIndex >= 0 ? (
+                      'Update Field Group'
+                    ) : (
+                      <>
+                        <PlusCircle className="mr-2 h-4 w-4" /> Add Field Group
+                      </>
+                    )}
+                  </Button>
+                  
+                  {editingFieldGroupIndex >= 0 && (
+                    <Button 
+                      variant="outline" 
+                      onClick={cancelFieldGroupEdit}
+                    >
+                      Cancel
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </form>
+      </Tabs>
     </div>
   );
 };

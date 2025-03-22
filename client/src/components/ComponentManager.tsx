@@ -1,16 +1,31 @@
-// src/components/ComponentManager.tsx
-import React, { useEffect, useState } from "react";
-import {
-  FiCopy,
-  FiDownload,
-  FiEdit2,
-  FiPlus,
-  FiRefreshCw,
-  FiTrash2,
-} from "react-icons/fi";
-import { toast } from "react-toastify";
+import { useEffect, useState } from "react";
+import { 
+  PlusCircle, 
+  RefreshCw, 
+  Edit, 
+  Trash2, 
+  Copy, 
+  Download, 
+  CheckCircle2, 
+  X
+} from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
 import ComponentEditor from "./ComponentEditor";
-import "./ComponentManager.css";
 import { 
   Component, 
   ComponentGroup, 
@@ -26,7 +41,7 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({ makeApiRequest }) =
   const [editingComponent, setEditingComponent] = useState<Component | null>(null);
   const [currentGroup, setCurrentGroup] = useState<string>("");
   const [channelId, setChannelId] = useState<string>("");
-  const [activeChannelId, setActiveChannelId] = useState<string>(""); // State for active/connected channel
+  const [activeChannelId, setActiveChannelId] = useState<string>("");
   const [jsonExport, setJsonExport] = useState<Component | null>(null);
   const [showGroupForm, setShowGroupForm] = useState<boolean>(false);
   const [newGroup, setNewGroup] = useState<ComponentGroup>({
@@ -34,6 +49,8 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({ makeApiRequest }) =
     hidden: false,
     system: false,
   });
+  
+  // Using Sonner toast directly
 
   // Fetch component groups when ACTIVE channel ID changes
   useEffect(() => {
@@ -205,11 +222,7 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({ makeApiRequest }) =
       const result = await makeApiRequest(params);
 
       if (result.success) {
-        toast.success(
-          `Component ${
-            operation === "createComponent" ? "created" : "updated"
-          } successfully`
-        );
+        toast.success(`Component ${operation === "createComponent" ? "created" : "updated"} successfully`);
         setShowEditor(false);
         fetchComponents();
       }
@@ -313,8 +326,12 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({ makeApiRequest }) =
     
     navigator.clipboard
       .writeText(JSON.stringify(jsonExport, null, 2))
-      .then(() => toast.success("Copied to clipboard"))
-      .catch(() => toast.error("Failed to copy to clipboard"));
+      .then(() => {
+        toast.success("Copied to clipboard");
+      })
+      .catch(() => {
+        toast.error("Failed to copy to clipboard");
+      });
   };
 
   // Download JSON file
@@ -350,15 +367,23 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({ makeApiRequest }) =
 
   // Handle changes to the new group form
   const handleNewGroupChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value } = e.target;
     setNewGroup((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: value,
+    }));
+  };
+
+  // Handle checkbox changes for the new group form
+  const handleNewGroupCheckboxChange = (name: string, checked: boolean) => {
+    setNewGroup((prev) => ({
+      ...prev,
+      [name]: checked,
     }));
   };
 
   return (
-    <div className="component-manager">
+    <div className="container mx-auto p-6">
       {showEditor ? (
         <ComponentEditor
           component={editingComponent}
@@ -368,35 +393,37 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({ makeApiRequest }) =
         />
       ) : (
         <>
-          <div className="manager-header">
-            <div className="manager-title">
-              <h2>Components</h2>
+          <div className="flex justify-between items-center mb-6">
+            <div className="space-y-2">
+              <h2 className="text-xl font-semibold">Components</h2>
 
               {!activeChannelId ? (
-                <form className="channel-form" onSubmit={handleChannelIdSubmit}>
-                  <div className="form-group">
-                    <label htmlFor="channelId">Channel ID</label>
-                    <div className="input-with-button">
-                      <input
-                        type="text"
+                <form onSubmit={handleChannelIdSubmit} className="max-w-md">
+                  <div className="space-y-2">
+                    <Label htmlFor="channelId">Channel ID</Label>
+                    <div className="flex space-x-2">
+                      <Input
                         id="channelId"
                         value={channelId}
                         onChange={handleChannelIdChange}
                         placeholder="e.g. brxsaas or brxsaas-projectId"
                         required
                       />
-                      <button type="submit" className="btn">
-                        Connect
-                      </button>
+                      <Button type="submit">Connect</Button>
                     </div>
-                    <small>Enter the channel ID to manage its components</small>
+                    <p className="text-xs text-muted-foreground">
+                      Enter the channel ID to manage its components
+                    </p>
                   </div>
                 </form>
               ) : (
-                <div className="channel-info">
-                  <span>Channel: {activeChannelId}</span>
-                  <button
-                    className="btn-link"
+                <div className="flex items-center space-x-2">
+                  <Badge variant="outline" className="px-3 py-1">
+                    Channel: {activeChannelId}
+                  </Badge>
+                  <Button 
+                    variant="link" 
+                    size="sm" 
                     onClick={() => {
                       setActiveChannelId("");
                       setCurrentGroup("");
@@ -405,269 +432,266 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({ makeApiRequest }) =
                     }}
                   >
                     Change
-                  </button>
+                  </Button>
                 </div>
               )}
             </div>
 
             {activeChannelId && (
-              <div className="manager-actions">
-                <button
-                  className="btn btn-primary"
-                  onClick={() => setShowGroupForm(true)}
-                  disabled={loading}
-                >
-                  <FiPlus /> New Group
-                </button>
+              <div className="flex space-x-3">
+                <Button onClick={() => setShowGroupForm(true)} disabled={loading}>
+                  <PlusCircle className="mr-2 h-4 w-4" /> New Group
+                </Button>
                 {currentGroup && (
-                  <button
-                    className="btn btn-primary"
-                    onClick={createComponent}
-                    disabled={loading}
-                  >
-                    <FiPlus /> New Component
-                  </button>
+                  <Button onClick={createComponent} disabled={loading}>
+                    <PlusCircle className="mr-2 h-4 w-4" /> New Component
+                  </Button>
                 )}
-                <button
-                  className="btn btn-outline"
-                  onClick={
-                    currentGroup ? fetchComponents : fetchComponentGroups
-                  }
+                <Button 
+                  variant="outline" 
+                  onClick={currentGroup ? fetchComponents : fetchComponentGroups} 
                   disabled={loading}
                 >
-                  <FiRefreshCw /> Refresh
-                </button>
+                  <RefreshCw className="mr-2 h-4 w-4" /> Refresh
+                </Button>
               </div>
             )}
           </div>
 
           {showGroupForm && (
-            <div className="group-form">
-              <h3>New Component Group</h3>
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="groupName">Name*</label>
-                  <input
-                    type="text"
-                    id="groupName"
-                    name="name"
-                    value={newGroup.name}
-                    onChange={handleNewGroupChange}
-                    placeholder="e.g. content-components"
-                    required
-                  />
-                </div>
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="text-base font-medium">New Component Group</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="groupName">Name*</Label>
+                    <Input
+                      id="groupName"
+                      name="name"
+                      value={newGroup.name}
+                      onChange={handleNewGroupChange}
+                      placeholder="e.g. content-components"
+                      required
+                    />
+                  </div>
 
-                <div className="form-group checkbox-group">
-                  <div className="checkbox-row">
-                    <label>
-                      <input
-                        type="checkbox"
-                        name="hidden"
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="hidden"
                         checked={newGroup.hidden}
-                        onChange={handleNewGroupChange}
+                        onCheckedChange={(checked) => 
+                          handleNewGroupCheckboxChange('hidden', checked as boolean)}
                       />
-                      Hidden
-                    </label>
-                  </div>
+                      <Label htmlFor="hidden" className="cursor-pointer">Hidden</Label>
+                    </div>
 
-                  <div className="checkbox-row">
-                    <label>
-                      <input
-                        type="checkbox"
-                        name="system"
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="system"
                         checked={newGroup.system}
-                        onChange={handleNewGroupChange}
+                        onCheckedChange={(checked) => 
+                          handleNewGroupCheckboxChange('system', checked as boolean)}
                       />
-                      System
-                    </label>
+                      <Label htmlFor="system" className="cursor-pointer">System</Label>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="form-actions">
-                <button
-                  className="btn btn-primary"
-                  onClick={createComponentGroup}
-                  disabled={loading}
-                >
-                  Create Group
-                </button>
-                <button
-                  className="btn btn-outline"
-                  onClick={() => {
-                    setShowGroupForm(false);
-                    setNewGroup({ name: "", hidden: false, system: false });
-                  }}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
+                <div className="flex justify-end space-x-3 mt-6">
+                  <Button
+                    onClick={createComponentGroup}
+                    disabled={!newGroup.name || loading}
+                  >
+                    Create Group
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowGroupForm(false);
+                      setNewGroup({ name: "", hidden: false, system: false });
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           )}
 
           {activeChannelId && (
-            <div className="component-workspace">
-              <div className="component-sidebar">
-                <h3>Component Groups</h3>
-                {componentGroups.length === 0 ? (
-                  <div className="empty-state">
-                    <p>No component groups found.</p>
-                    <button
-                      className="btn btn-sm"
-                      onClick={() => setShowGroupForm(true)}
-                    >
-                      Create your first group
-                    </button>
-                  </div>
-                ) : (
-                  <ul className="group-list">
-                    {componentGroups.map((group) => (
-                      <li
-                        key={group.name}
-                        className={currentGroup === group.name ? "active" : ""}
-                      >
-                        <div
-                          className="group-item"
-                          onClick={() => setCurrentGroup(group.name)}
+            <div className="grid grid-cols-4 gap-6">
+              <div className="col-span-1">
+                <Card className="h-full">
+                  <CardHeader>
+                    <CardTitle className="text-sm font-medium">Component Groups</CardTitle>
+                  </CardHeader>
+                  <div className="overflow-y-auto max-h-[calc(100vh-220px)]">
+                    {componentGroups.length === 0 ? (
+                      <div className="p-6 text-center">
+                        <p className="text-muted-foreground text-sm mb-4">No component groups found.</p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowGroupForm(true)}
                         >
-                          <span>{group.name}</span>
-                          {(group.hidden || group.system) && (
-                            <span className="group-badges">
-                              {group.hidden && (
-                                <span className="badge">Hidden</span>
-                              )}
-                              {group.system && (
-                                <span className="badge system">System</span>
-                              )}
-                            </span>
-                          )}
-                        </div>
-                        {!group.system && (
-                          <button
-                            className="icon-btn delete"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              deleteComponentGroup(group.name);
-                            }}
-                            title="Delete Group"
+                          Create your first group
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="divide-y">
+                        {componentGroups.map((group) => (
+                          <div
+                            key={group.name}
+                            className={`flex items-center justify-between p-3 ${
+                              currentGroup === group.name ? "bg-muted" : ""
+                            } hover:bg-muted/50 cursor-pointer`}
+                            onClick={() => setCurrentGroup(group.name)}
                           >
-                            <FiTrash2 />
-                          </button>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                )}
+                            <div className="flex flex-col">
+                              <span className="text-sm font-medium">{group.name}</span>
+                              <div className="flex space-x-1 mt-1">
+                                {group.hidden && (
+                                  <Badge variant="outline" className="text-xs py-0">Hidden</Badge>
+                                )}
+                                {group.system && (
+                                  <Badge variant="secondary" className="text-xs py-0">System</Badge>
+                                )}
+                              </div>
+                            </div>
+                            {!group.system && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  deleteComponentGroup(group.name);
+                                }}
+                                className="opacity-60 hover:opacity-100"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </Card>
               </div>
 
-              <div className="component-content">
-                {!currentGroup ? (
-                  <div className="empty-state">
-                    <p>
-                      Select a component group from the sidebar or create a new
-                      one.
-                    </p>
-                  </div>
-                ) : loading ? (
-                  <div className="loading">Loading components...</div>
-                ) : components.length === 0 ? (
-                  <div className="empty-state">
-                    <p>No components found in group "{currentGroup}".</p>
-                    <button
-                      className="btn btn-primary"
-                      onClick={createComponent}
-                    >
-                      Create your first component
-                    </button>
-                  </div>
-                ) : (
-                  <div className="component-list">
-                    <h3>Components in {currentGroup}</h3>
-                    <table>
-                      <thead>
-                        <tr>
-                          <th>Name</th>
-                          <th>Label</th>
-                          <th>Type</th>
-                          <th>Hidden</th>
-                          <th>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {components.map((component) => {
-                          const componentName = component.id.split("/")[1];
-                          return (
-                            <tr key={component.id}>
-                              <td>{componentName}</td>
-                              <td>{component.label || "-"}</td>
-                              <td>{component.ctype || "-"}</td>
-                              <td>{component.hidden ? "Yes" : "No"}</td>
-                              <td>
-                                <div className="action-buttons">
-                                  <button
-                                    className="icon-btn edit"
-                                    onClick={() =>
-                                      getComponentDetails(componentName)
-                                    }
-                                    title="Edit"
-                                  >
-                                    <FiEdit2 />
-                                  </button>
-                                  {!component.system && (
-                                    <button
-                                      className="icon-btn delete"
-                                      onClick={() =>
-                                        deleteComponent(componentName)
-                                      }
-                                      title="Delete"
-                                    >
-                                      <FiTrash2 />
-                                    </button>
-                                  )}
-                                  <button
-                                    className="icon-btn export"
-                                    onClick={() => exportComponent(component)}
-                                    title="Export"
-                                  >
-                                    <FiCopy />
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
+              <div className="col-span-3">
+                <Card className="h-full">
+                  {!currentGroup ? (
+                    <div className="flex flex-col items-center justify-center h-full p-8">
+                      <p className="text-muted-foreground mb-4">
+                        Select a component group from the sidebar or create a new one.
+                      </p>
+                    </div>
+                  ) : loading ? (
+                    <div className="flex justify-center items-center h-64 text-muted-foreground italic">
+                      Loading components...
+                    </div>
+                  ) : components.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-64">
+                      <p className="text-muted-foreground mb-4">
+                        No components found in group "{currentGroup}".
+                      </p>
+                      <Button onClick={createComponent}>
+                        Create your first component
+                      </Button>
+                    </div>
+                  ) : (
+                    <>
+                      <CardHeader>
+                        <CardTitle className="text-base font-medium">Components in {currentGroup}</CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-0">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Name</TableHead>
+                              <TableHead>Label</TableHead>
+                              <TableHead>Type</TableHead>
+                              <TableHead>Hidden</TableHead>
+                              <TableHead className="text-right">Actions</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {components.map((component) => {
+                              const componentName = component.id.split("/")[1];
+                              return (
+                                <TableRow key={component.id}>
+                                  <TableCell className="font-medium">{componentName}</TableCell>
+                                  <TableCell>{component.label || "-"}</TableCell>
+                                  <TableCell>{component.ctype || "-"}</TableCell>
+                                  <TableCell>
+                                    {component.hidden ? <CheckCircle2 className="h-4 w-4 text-primary" /> : <X className="h-4 w-4 text-muted-foreground" />}
+                                  </TableCell>
+                                  <TableCell className="text-right">
+                                    <div className="flex justify-end space-x-2">
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => getComponentDetails(componentName)}
+                                        title="Edit"
+                                      >
+                                        <Edit className="h-4 w-4" />
+                                      </Button>
+                                      {!component.system && (
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          onClick={() => deleteComponent(componentName)}
+                                          title="Delete"
+                                        >
+                                          <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                      )}
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => exportComponent(component)}
+                                        title="Export"
+                                      >
+                                        <Copy className="h-4 w-4" />
+                                      </Button>
+                                    </div>
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })}
+                          </TableBody>
+                        </Table>
+                      </CardContent>
+                    </>
+                  )}
+                </Card>
               </div>
             </div>
           )}
 
           {jsonExport && (
-            <div className="json-export">
-              <div className="export-header">
-                <h3>JSON Export: {jsonExport.id}</h3>
-                <div className="export-actions">
-                  <button className="btn btn-sm" onClick={copyToClipboard}>
-                    <FiCopy /> Copy
-                  </button>
-                  <button className="btn btn-sm" onClick={downloadJson}>
-                    <FiDownload /> Download
-                  </button>
-                  <button
-                    className="btn btn-sm btn-outline"
-                    onClick={() => setJsonExport(null)}
-                  >
-                    Close
-                  </button>
+            <Dialog open={!!jsonExport} onOpenChange={(open) => !open && setJsonExport(null)}>
+              <DialogContent className="max-w-4xl max-h-[80vh] flex flex-col">
+                <DialogHeader>
+                  <DialogTitle>JSON Export: {jsonExport.id}</DialogTitle>
+                </DialogHeader>
+                <div className="flex justify-end space-x-2 mb-4">
+                  <Button variant="secondary" size="sm" onClick={copyToClipboard}>
+                    <Copy className="mr-2 h-4 w-4" /> Copy
+                  </Button>
+                  <Button variant="secondary" size="sm" onClick={downloadJson}>
+                    <Download className="mr-2 h-4 w-4" /> Download
+                  </Button>
                 </div>
-              </div>
-              <pre className="json-content">
-                {JSON.stringify(jsonExport, null, 2)}
-              </pre>
-            </div>
+                <div className="flex-grow overflow-y-auto p-4 bg-muted rounded-md">
+                  <pre className="text-xs">{JSON.stringify(jsonExport, null, 2)}</pre>
+                </div>
+              </DialogContent>
+            </Dialog>
           )}
         </>
       )}

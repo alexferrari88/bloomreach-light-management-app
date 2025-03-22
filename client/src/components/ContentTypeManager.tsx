@@ -1,9 +1,19 @@
-// src/components/ContentTypeManager.tsx
-import React, { useState, useEffect } from 'react';
-import { FiPlus, FiEdit2, FiTrash2, FiRefreshCw, FiCopy, FiDownload } from 'react-icons/fi';
-import { toast } from 'react-toastify';
+import { useState, useEffect } from 'react';
+import { PlusCircle, RefreshCw, Edit, Trash2, Copy, Download } from 'lucide-react';
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import ContentTypeEditor from './ContentTypeEditor';
-import './ContentTypeManager.css';
 import { ContentType, ContentTypeManagerProps, ApiRequest } from '../types';
 
 const ContentTypeManager: React.FC<ContentTypeManagerProps> = ({ makeApiRequest }) => {
@@ -13,6 +23,7 @@ const ContentTypeManager: React.FC<ContentTypeManagerProps> = ({ makeApiRequest 
   const [showEditor, setShowEditor] = useState<boolean>(false);
   const [editingContentType, setEditingContentType] = useState<ContentType | null>(null);
   const [jsonExport, setJsonExport] = useState<ContentType | null>(null);
+  // Using Sonner toast directly
 
   // Fetch content types when mode changes
   useEffect(() => {
@@ -71,7 +82,7 @@ const ContentTypeManager: React.FC<ContentTypeManagerProps> = ({ makeApiRequest 
       }
     } catch (error) {
       console.error('Failed to fetch content type details:', error);
-      toast.error('Failed to load content type details');
+      toast.error("Failed to load content type details");
     } finally {
       setLoading(false);
     }
@@ -102,7 +113,7 @@ const ContentTypeManager: React.FC<ContentTypeManagerProps> = ({ makeApiRequest 
       }
     } catch (error) {
       console.error('Failed to delete content type:', error);
-      toast.error('Failed to delete content type');
+      toast.error("Failed to delete content type");
     } finally {
       setLoading(false);
     }
@@ -141,7 +152,7 @@ const ContentTypeManager: React.FC<ContentTypeManagerProps> = ({ makeApiRequest 
       }
     } catch (error) {
       console.error('Failed to save content type:', error);
-      toast.error('Failed to save content type');
+      toast.error("Failed to save content type");
     } finally {
       setLoading(false);
     }
@@ -157,8 +168,12 @@ const ContentTypeManager: React.FC<ContentTypeManagerProps> = ({ makeApiRequest 
     if (!jsonExport) return;
     
     navigator.clipboard.writeText(JSON.stringify(jsonExport, null, 2))
-      .then(() => toast.success('Copied to clipboard'))
-      .catch(() => toast.error('Failed to copy to clipboard'));
+      .then(() => {
+        toast.success("Copied to clipboard");
+      })
+      .catch(() => {
+        toast.error("Failed to copy to clipboard");
+      });
   };
 
   // Download JSON file
@@ -175,7 +190,7 @@ const ContentTypeManager: React.FC<ContentTypeManagerProps> = ({ makeApiRequest 
   };
 
   return (
-    <div className="content-type-manager">
+    <div className="container mx-auto p-6">
       {showEditor ? (
         <ContentTypeEditor 
           contentType={editingContentType} 
@@ -185,126 +200,114 @@ const ContentTypeManager: React.FC<ContentTypeManagerProps> = ({ makeApiRequest 
         />
       ) : (
         <>
-          <div className="manager-header">
-            <div className="manager-title">
-              <h2>Content Types</h2>
-              <div className="mode-toggle">
-                <button 
-                  className={`toggle-btn ${contentTypeMode === 'core' ? 'active' : ''}`}
-                  onClick={() => setContentTypeMode('core')}
-                >
-                  Core
-                </button>
-                <button 
-                  className={`toggle-btn ${contentTypeMode === 'development' ? 'active' : ''}`}
-                  onClick={() => setContentTypeMode('development')}
-                >
-                  Development
-                </button>
-              </div>
+          <div className="flex justify-between items-center mb-6">
+            <div className="space-y-2">
+              <h2 className="text-xl font-semibold">Content Types</h2>
+              <ToggleGroup 
+                type="single" 
+                value={contentTypeMode}
+                onValueChange={(value) => value && setContentTypeMode(value as 'core' | 'development')}
+                className="border rounded-md"
+              >
+                <ToggleGroupItem value="core">Core</ToggleGroupItem>
+                <ToggleGroupItem value="development">Development</ToggleGroupItem>
+              </ToggleGroup>
             </div>
             
-            <div className="manager-actions">
-              <button 
-                className="btn btn-primary"
-                onClick={createContentType}
-                disabled={loading}
-              >
-                <FiPlus /> New Content Type
-              </button>
-              <button 
-                className="btn btn-outline"
-                onClick={fetchContentTypes}
-                disabled={loading}
-              >
-                <FiRefreshCw /> Refresh
-              </button>
+            <div className="flex space-x-3">
+              <Button onClick={createContentType} disabled={loading}>
+                <PlusCircle className="mr-2 h-4 w-4" /> New Content Type
+              </Button>
+              <Button variant="outline" onClick={fetchContentTypes} disabled={loading}>
+                <RefreshCw className="mr-2 h-4 w-4" /> Refresh
+              </Button>
             </div>
           </div>
           
-          <div className="content-type-list-container">
+          <Card>
             {loading ? (
-              <div className="loading">Loading content types...</div>
+              <div className="flex justify-center items-center py-12 text-muted-foreground italic">
+                Loading content types...
+              </div>
             ) : contentTypes.length === 0 ? (
-              <div className="empty-state">
-                <p>No content types found.</p>
-                <button className="btn btn-primary" onClick={createContentType}>
+              <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                <p className="text-muted-foreground">No content types found.</p>
+                <Button onClick={createContentType}>
                   Create your first content type
-                </button>
+                </Button>
               </div>
             ) : (
-              <div className="content-type-list">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Name</th>
-                      <th>Display Name</th>
-                      <th>Description</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Display Name</TableHead>
+                      <TableHead>Description</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                     {contentTypes.map((contentType) => (
-                      <tr key={contentType.id || contentType.name}>
-                        <td>{contentType.id || contentType.name}</td>
-                        <td>{contentType.displayName || '-'}</td>
-                        <td className="description-cell">{contentType.description || '-'}</td>
-                        <td>
-                          <div className="action-buttons">
-                            <button 
-                              className="icon-btn edit"
+                      <TableRow key={contentType.id || contentType.name}>
+                        <TableCell className="font-medium">{contentType.id || contentType.name}</TableCell>
+                        <TableCell>{contentType.displayName || '-'}</TableCell>
+                        <TableCell className="max-w-md truncate">{contentType.description || '-'}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end space-x-2">
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
                               onClick={() => getContentTypeDetails(contentType.id || contentType.name)}
                               title="Edit"
                             >
-                              <FiEdit2 />
-                            </button>
-                            <button 
-                              className="icon-btn delete"
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
                               onClick={() => deleteContentType(contentType.id || contentType.name)}
                               title="Delete"
                             >
-                              <FiTrash2 />
-                            </button>
-                            <button 
-                              className="icon-btn export"
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
                               onClick={() => exportContentType(contentType)}
                               title="Export"
                             >
-                              <FiCopy />
-                            </button>
+                              <Copy className="h-4 w-4" />
+                            </Button>
                           </div>
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     ))}
-                  </tbody>
-                </table>
-              </div>
+                  </TableBody>
+                </Table>
+              </CardContent>
             )}
-          </div>
+          </Card>
           
           {jsonExport && (
-            <div className="json-export">
-              <div className="export-header">
-                <h3>JSON Export: {jsonExport.id || jsonExport.name}</h3>
-                <div className="export-actions">
-                  <button className="btn btn-sm" onClick={copyToClipboard}>
-                    <FiCopy /> Copy
-                  </button>
-                  <button className="btn btn-sm" onClick={downloadJson}>
-                    <FiDownload /> Download
-                  </button>
-                  <button 
-                    className="btn btn-sm btn-outline" 
-                    onClick={() => setJsonExport(null)}
-                  >
-                    Close
-                  </button>
+            <Dialog open={!!jsonExport} onOpenChange={(open) => !open && setJsonExport(null)}>
+              <DialogContent className="max-w-4xl max-h-[80vh] flex flex-col">
+                <div className="flex justify-between items-center pb-2 border-b">
+                  <h3 className="text-lg font-medium">JSON Export: {jsonExport.id || jsonExport.name}</h3>
+                  <div className="flex space-x-2">
+                    <Button variant="secondary" size="sm" onClick={copyToClipboard}>
+                      <Copy className="mr-2 h-4 w-4" /> Copy
+                    </Button>
+                    <Button variant="secondary" size="sm" onClick={downloadJson}>
+                      <Download className="mr-2 h-4 w-4" /> Download
+                    </Button>
+                  </div>
                 </div>
-              </div>
-              <pre className="json-content">
-                {JSON.stringify(jsonExport, null, 2)}
-              </pre>
-            </div>
+                <div className="overflow-y-auto flex-grow p-4 bg-muted rounded-md my-4">
+                  <pre className="text-xs">{JSON.stringify(jsonExport, null, 2)}</pre>
+                </div>
+              </DialogContent>
+            </Dialog>
           )}
         </>
       )}

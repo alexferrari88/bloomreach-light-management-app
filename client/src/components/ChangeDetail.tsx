@@ -1,10 +1,6 @@
-// src/components/ChangeDetail.tsx
-import React from 'react';
-import { FiX } from 'react-icons/fi';
-import './ChangeDetail.css';
 import { ChangeDetailProps } from '../types';
 
-const ChangeDetail: React.FC<ChangeDetailProps> = ({ change, onClose }) => {
+const ChangeDetail: React.FC<ChangeDetailProps> = ({ change }) => {
   if (!change) return null;
   
   type ObjectType = Record<string, any>;
@@ -16,13 +12,13 @@ const ChangeDetail: React.FC<ChangeDetailProps> = ({ change, onClose }) => {
     const allKeys = [...new Set([...Object.keys(prevData), ...Object.keys(newData)])];
     
     return (
-      <div className="diff-container">
-        <table className="diff-table">
+      <div className="overflow-x-auto">
+        <table className="w-full text-xs border-collapse">
           <thead>
             <tr>
-              <th>Field</th>
-              <th>Previous Value</th>
-              <th>New Value</th>
+              <th className="text-left p-2 bg-muted border-b-2 border-border">Field</th>
+              <th className="text-left p-2 bg-muted border-b-2 border-border">Previous Value</th>
+              <th className="text-left p-2 bg-muted border-b-2 border-border">New Value</th>
             </tr>
           </thead>
           <tbody>
@@ -36,12 +32,12 @@ const ChangeDetail: React.FC<ChangeDetailProps> = ({ change, onClose }) => {
                   (typeof prevValue === 'object' && prevValue !== null) || 
                   (typeof newValue === 'object' && newValue !== null)) {
                 return (
-                  <tr key={key} className={hasChanged ? 'changed' : ''}>
-                    <td className="field-name">{key}</td>
-                    <td className="prev-value">
+                  <tr key={key} className={hasChanged ? 'bg-amber-50' : ''}>
+                    <td className="p-2 border-b border-border font-medium w-1/5">{key}</td>
+                    <td className="p-2 border-b border-border text-red-700 line-through opacity-80 w-2/5">
                       {prevValue ? `[Complex data - ${Array.isArray(prevValue) ? prevValue.length + ' items' : 'Object'}]` : '-'}
                     </td>
-                    <td className="new-value">
+                    <td className="p-2 border-b border-border text-green-700 w-2/5">
                       {newValue ? `[Complex data - ${Array.isArray(newValue) ? newValue.length + ' items' : 'Object'}]` : '-'}
                     </td>
                   </tr>
@@ -49,10 +45,14 @@ const ChangeDetail: React.FC<ChangeDetailProps> = ({ change, onClose }) => {
               }
               
               return (
-                <tr key={key} className={hasChanged ? 'changed' : ''}>
-                  <td className="field-name">{key}</td>
-                  <td className="prev-value">{prevValue !== undefined ? String(prevValue) : '-'}</td>
-                  <td className="new-value">{newValue !== undefined ? String(newValue) : '-'}</td>
+                <tr key={key} className={hasChanged ? 'bg-amber-50' : ''}>
+                  <td className="p-2 border-b border-border font-medium w-1/5">{key}</td>
+                  <td className="p-2 border-b border-border text-red-700 line-through opacity-80 w-2/5">
+                    {prevValue !== undefined ? String(prevValue) : '-'}
+                  </td>
+                  <td className="p-2 border-b border-border text-green-700 w-2/5">
+                    {newValue !== undefined ? String(newValue) : '-'}
+                  </td>
                 </tr>
               );
             })}
@@ -86,15 +86,17 @@ const ChangeDetail: React.FC<ChangeDetailProps> = ({ change, onClose }) => {
     });
     
     return (
-      <div className="properties-changes">
+      <div className="space-y-4">
         {added.length > 0 && (
-          <div className="property-section added">
-            <h4>Added Properties ({added.length})</h4>
-            <ul>
+          <div className="space-y-2">
+            <h4 className="text-sm font-medium text-green-700 flex items-center">
+              Added Properties ({added.length})
+            </h4>
+            <ul className="space-y-1">
               {added.map(prop => (
-                <li key={prop.name}>
+                <li key={prop.name} className="p-2 rounded bg-green-50 text-sm">
                   <strong>{prop.name}</strong> ({prop.type || prop.valueType})
-                  {prop.displayName && <span className="display-name"> - {prop.displayName}</span>}
+                  {prop.displayName && <span className="italic ml-1"> - {prop.displayName}</span>}
                 </li>
               ))}
             </ul>
@@ -102,22 +104,24 @@ const ChangeDetail: React.FC<ChangeDetailProps> = ({ change, onClose }) => {
         )}
         
         {modified.length > 0 && (
-          <div className="property-section modified">
-            <h4>Modified Properties ({modified.length})</h4>
-            <ul>
+          <div className="space-y-2">
+            <h4 className="text-sm font-medium text-blue-700 flex items-center">
+              Modified Properties ({modified.length})
+            </h4>
+            <ul className="space-y-1">
               {modified.map(prop => {
-                const prevProp = prevProperties.find(p => p.name === prop.name);
+                const prevProp = prevProperties.find(p => p.name === p.name);
                 if (!prevProp) return null;
                 
                 return (
-                  <li key={prop.name}>
+                  <li key={prop.name} className="p-2 rounded bg-blue-50 text-sm">
                     <strong>{prop.name}</strong>
-                    <div className="property-diff">
+                    <div className="mt-1 pl-4 text-xs space-y-1">
                       {Object.keys(prop).filter(key => key !== 'name' && JSON.stringify(prop[key as keyof PropertyType]) !== JSON.stringify(prevProp[key as keyof PropertyType])).map(key => (
-                        <div key={key} className="diff-item">
-                          <span className="diff-key">{key}</span>: 
-                          <span className="diff-old">{JSON.stringify(prevProp[key as keyof PropertyType])}</span> → 
-                          <span className="diff-new">{JSON.stringify(prop[key as keyof PropertyType])}</span>
+                        <div key={key} className="flex flex-wrap items-center gap-1">
+                          <span className="font-medium">{key}:</span>
+                          <span className="text-red-700 line-through opacity-80">{JSON.stringify(prevProp[key as keyof PropertyType])}</span>
+                          <span className="text-green-700">{JSON.stringify(prop[key as keyof PropertyType])}</span>
                         </div>
                       ))}
                     </div>
@@ -129,13 +133,15 @@ const ChangeDetail: React.FC<ChangeDetailProps> = ({ change, onClose }) => {
         )}
         
         {removed.length > 0 && (
-          <div className="property-section removed">
-            <h4>Removed Properties ({removed.length})</h4>
-            <ul>
+          <div className="space-y-2">
+            <h4 className="text-sm font-medium text-red-700 flex items-center">
+              Removed Properties ({removed.length})
+            </h4>
+            <ul className="space-y-1">
               {removed.map(prop => (
-                <li key={prop.name}>
+                <li key={prop.name} className="p-2 rounded bg-red-50 text-sm">
                   <strong>{prop.name}</strong> ({prop.type || prop.valueType})
-                  {prop.displayName && <span className="display-name"> - {prop.displayName}</span>}
+                  {prop.displayName && <span className="italic ml-1"> - {prop.displayName}</span>}
                 </li>
               ))}
             </ul>
@@ -146,82 +152,67 @@ const ChangeDetail: React.FC<ChangeDetailProps> = ({ change, onClose }) => {
   };
   
   return (
-    <div className="change-detail-overlay">
-      <div className="change-detail">
-        <div className="detail-header">
-          <h3>
-            <span className={`detail-type ${change.action.toLowerCase()}`}>{change.action}</span>
-            {' '}{change.entityType}: <strong>{change.entityName}</strong>
-          </h3>
-          <span className="detail-time">{change.timestamp}</span>
-          <button className="btn-close" onClick={onClose}>
-            <FiX />
-          </button>
-        </div>
-        
-        <div className="detail-content">
-          {change.action === 'CREATE' && (
-            <>
-              <h4>Created Entity Details</h4>
-              {change.entityData && (
-                <div className="data-display">
-                  <pre>{JSON.stringify(change.entityData, null, 2)}</pre>
-                </div>
-              )}
-            </>
-          )}
-          
-          {change.action === 'UPDATE' && (
-            <>
-              <h4>Updated Entity Details</h4>
-              {change.entityData && change.previousData && (
-                <>
-                  {change.entityType === 'Content Type' && change.previousData.properties && change.entityData.properties && (
-                    <>
-                      <h5>Property Changes</h5>
-                      {renderPropertyChanges(change.previousData.properties, change.entityData.properties)}
-                    </>
-                  )}
-                  
-                  {change.entityType === 'Component' && change.previousData.parameters && change.entityData.parameters && (
-                    <>
-                      <h5>Parameter Changes</h5>
-                      {renderPropertyChanges(change.previousData.parameters, change.entityData.parameters)}
-                      
-                      {change.previousData.fieldGroups && change.entityData.fieldGroups && (
-                        <>
-                          <h5>Field Group Changes</h5>
-                          {renderPropertyChanges(change.previousData.fieldGroups, change.entityData.fieldGroups)}
-                        </>
-                      )}
-                    </>
-                  )}
-                  
-                  <h5>All Changes</h5>
-                  {renderDiff(change.previousData, change.entityData)}
-                </>
-              )}
-            </>
-          )}
-          
-          {change.action === 'DELETE' && (
-            <>
-              <h4>Deleted Entity Details</h4>
-              {change.previousData && (
-                <div className="data-display">
-                  <pre>{JSON.stringify(change.previousData, null, 2)}</pre>
-                </div>
-              )}
-            </>
-          )}
-          
-          {!change.entityData && !change.previousData && (
-            <div className="no-details">
-              <p>No detailed information available for this operation.</p>
+    <div className="space-y-4">
+      {change.action === 'CREATE' && (
+        <>
+          <h4 className="text-base font-medium text-primary">Created Entity Details</h4>
+          {change.entityData && (
+            <div className="p-4 bg-muted rounded overflow-x-auto">
+              <pre className="text-xs">{JSON.stringify(change.entityData, null, 2)}</pre>
             </div>
           )}
+        </>
+      )}
+      
+      {change.action === 'UPDATE' && (
+        <>
+          <h4 className="text-base font-medium text-primary">Updated Entity Details</h4>
+          {change.entityData && change.previousData && (
+            <>
+              {change.entityType === 'Content Type' && change.previousData.properties && change.entityData.properties && (
+                <>
+                  <h5 className="text-sm font-medium text-muted-foreground mt-4">Property Changes</h5>
+                  {renderPropertyChanges(change.previousData.properties, change.entityData.properties)}
+                </>
+              )}
+              
+              {change.entityType === 'Component' && change.previousData.parameters && change.entityData.parameters && (
+                <>
+                  <h5 className="text-sm font-medium text-muted-foreground mt-4">Parameter Changes</h5>
+                  {renderPropertyChanges(change.previousData.parameters, change.entityData.parameters)}
+                  
+                  {change.previousData.fieldGroups && change.entityData.fieldGroups && (
+                    <>
+                      <h5 className="text-sm font-medium text-muted-foreground mt-4">Field Group Changes</h5>
+                      {renderPropertyChanges(change.previousData.fieldGroups, change.entityData.fieldGroups)}
+                    </>
+                  )}
+                </>
+              )}
+              
+              <h5 className="text-sm font-medium text-muted-foreground mt-4">All Changes</h5>
+              {renderDiff(change.previousData, change.entityData)}
+            </>
+          )}
+        </>
+      )}
+      
+      {change.action === 'DELETE' && (
+        <>
+          <h4 className="text-base font-medium text-primary">Deleted Entity Details</h4>
+          {change.previousData && (
+            <div className="p-4 bg-muted rounded overflow-x-auto">
+              <pre className="text-xs">{JSON.stringify(change.previousData, null, 2)}</pre>
+            </div>
+          )}
+        </>
+      )}
+      
+      {!change.entityData && !change.previousData && (
+        <div className="py-8 text-center text-muted-foreground italic">
+          <p>No detailed information available for this operation.</p>
         </div>
-      </div>
+      )}
     </div>
   );
 };

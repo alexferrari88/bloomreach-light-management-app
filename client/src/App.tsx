@@ -1,19 +1,15 @@
-// src/App.tsx
-import axios from "axios";
 import { useEffect, useState } from "react";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import "./App.css";
+import axios from "axios";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { Toaster } from "@/components/ui-providers/toast-provider";
 import AuthForm from "./components/AuthForm";
 import ComponentManager from "./components/ComponentManager";
 import ContentTypeManager from "./components/ContentTypeManager";
 import ChangeHistory from "./components/ChangeHistory";
-import { 
-  ApiRequest, 
-  ApiResponse, 
-  Auth, 
-  Change 
-} from "./types";
+import { ApiRequest, ApiResponse, Auth, Change } from "./types";
+import { LogOut } from "lucide-react";
 
 function App() {
   // State for authentication
@@ -28,6 +24,8 @@ function App() {
   
   // State for change history
   const [changes, setChanges] = useState<Change[]>([]);
+  
+  // We're using Sonner directly now, no need for a hook
 
   // Load auth from local storage
   useEffect(() => {
@@ -56,11 +54,6 @@ function App() {
     setIsAuthenticated(false);
     setChanges([]); // Clear the change history on logout
     toast.info("Logged out successfully");
-  };
-
-  // Switch between content types and components
-  const switchSection = (section: "contentTypes" | "components") => {
-    setActiveSection(section);
   };
   
   // Record a change to the history with detailed information
@@ -94,14 +87,18 @@ function App() {
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
     
-    toast.success('Change history exported successfully');
+    toast.success("Change history exported successfully");
   };
   
   // Clear change history
   const clearChangeHistory = () => {
     if (window.confirm('Are you sure you want to clear the change history?')) {
       setChanges([]);
-      toast.info('Change history cleared');
+      toast({
+        title: "History cleared",
+        description: "Change history has been cleared",
+        duration: 3000,
+      });
     }
   };
 
@@ -183,66 +180,68 @@ function App() {
       const errorMsg =
         `${error.response?.data?.error}: ${error.response?.data?.details}` ||
         error.message;
-      toast.error(`API Error: ${errorMsg}`);
+      
+      toast.error(errorMsg, {
+        duration: 5000,
+      });
+      
       throw error;
     }
   };
 
   return (
-    <div className="app">
-      <ToastContainer position="bottom-right" />
+    <div className="min-h-screen bg-background">
+      <Toaster />
 
       {!isAuthenticated ? (
         <AuthForm onLogin={handleLogin} />
       ) : (
-        <>
-          <header className="app-header">
-            <h1>Bloomreach Management App</h1>
-            <div className="user-info">
-              <span>{auth.brxHost}</span>
-              <button className="btn btn-outline" onClick={handleLogout}>
+        <div className="flex flex-col min-h-screen">
+          <header className="border-b bg-card py-4 px-6 flex justify-between items-center">
+            <h1 className="text-xl font-semibold text-primary">Bloomreach Management App</h1>
+            <div className="flex items-center gap-4">
+              <span className="text-muted-foreground text-sm">{auth.brxHost}</span>
+              <Button variant="outline" size="sm" onClick={handleLogout}>
+                <LogOut className="mr-2 h-4 w-4" />
                 Logout
-              </button>
+              </Button>
             </div>
           </header>
 
-          <main className="app-main">
-            <div className="app-tabs">
-              <button
-                className={`tab-btn ${
-                  activeSection === "contentTypes" ? "active" : ""
-                }`}
-                onClick={() => switchSection("contentTypes")}
-              >
-                Content Types
-              </button>
-              <button
-                className={`tab-btn ${
-                  activeSection === "components" ? "active" : ""
-                }`}
-                onClick={() => switchSection("components")}
-              >
-                Components
-              </button>
-            </div>
-
-            <div className="app-content">
-              {activeSection === "contentTypes" ? (
-                <ContentTypeManager makeApiRequest={makeApiRequest} />
-              ) : (
-                <ComponentManager makeApiRequest={makeApiRequest} />
-              )}
-              
-              <div className="change-history-container">
-                <ChangeHistory 
-                  changes={changes} 
-                  onClear={clearChangeHistory} 
-                  onExport={exportChangeHistory} 
-                />
+          <main className="flex-1 flex flex-col">
+            <Tabs 
+              value={activeSection} 
+              onValueChange={(value: string) => setActiveSection(value as "contentTypes" | "components")}
+              className="w-full"
+            >
+              <div className="border-b bg-card">
+                <div className="container mx-auto">
+                  <TabsList className="h-12">
+                    <TabsTrigger value="contentTypes" className="flex-1">Content Types</TabsTrigger>
+                    <TabsTrigger value="components" className="flex-1">Components</TabsTrigger>
+                  </TabsList>
+                </div>
               </div>
-            </div>
+              
+              <div className="flex-1 overflow-auto">
+                <TabsContent value="contentTypes" className="mt-0 h-full">
+                  <ContentTypeManager makeApiRequest={makeApiRequest} />
+                </TabsContent>
+                <TabsContent value="components" className="mt-0 h-full">
+                  <ComponentManager makeApiRequest={makeApiRequest} />
+                </TabsContent>
+                
+                <div className="container mx-auto px-6 pb-6">
+                  <ChangeHistory 
+                    changes={changes} 
+                    onClear={clearChangeHistory} 
+                    onExport={exportChangeHistory} 
+                  />
+                </div>
+              </div>
+            </Tabs>
           </main>
-        </>
+        </div>
       )}
     </div>
   );
