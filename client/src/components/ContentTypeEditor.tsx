@@ -1,7 +1,26 @@
-// src/components/ContentTypeEditor.tsx
-import React, { useState, useEffect, FormEvent, ChangeEvent } from 'react';
-import { FiPlus, FiEdit2, FiTrash2, FiArrowUp, FiArrowDown, FiSave, FiX } from 'react-icons/fi';
-import './ContentTypeEditor.css';
+import { useState, useEffect, FormEvent, ChangeEvent } from 'react';
+import { Save, X, PlusCircle, Edit2, Trash2, ArrowUp, ArrowDown } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ContentType, ContentTypeEditorProps, Property } from '../types';
 
 const ContentTypeEditor: React.FC<ContentTypeEditorProps> = ({ contentType, onSave, onCancel, mode }) => {
@@ -59,6 +78,22 @@ const ContentTypeEditor: React.FC<ContentTypeEditorProps> = ({ contentType, onSa
     setCurrentProperty(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
+    }));
+  };
+
+  // Handle select changes
+  const handleSelectChange = (name: string, value: string) => {
+    setCurrentProperty(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  // Handle checkbox changes
+  const handleCheckboxChange = (name: string, checked: boolean) => {
+    setCurrentProperty(prev => ({
+      ...prev,
+      [name]: checked
     }));
   };
   
@@ -185,239 +220,241 @@ const ContentTypeEditor: React.FC<ContentTypeEditorProps> = ({ contentType, onSa
   };
   
   return (
-    <div className="content-type-editor">
-      <div className="editor-header">
-        <h2>{contentType ? 'Edit Content Type' : 'Create Content Type'}</h2>
-        <div className="editor-actions">
-          <button className="btn btn-primary" onClick={() => handleSubmit({ preventDefault: () => {} } as any)}>
-            <FiSave /> Save
-          </button>
-          <button className="btn btn-outline" onClick={onCancel}>
-            <FiX /> Cancel
-          </button>
+    <div className="bg-card rounded-lg border shadow-sm overflow-hidden">
+      <div className="flex justify-between items-center p-4 border-b sticky top-0 bg-card z-10">
+        <h2 className="text-xl font-semibold">{contentType ? 'Edit Content Type' : 'Create Content Type'}</h2>
+        <div className="flex space-x-3">
+          <Button onClick={() => handleSubmit({ preventDefault: () => {} } as any)}>
+            <Save className="mr-2 h-4 w-4" /> Save
+          </Button>
+          <Button variant="outline" onClick={onCancel}>
+            <X className="mr-2 h-4 w-4" /> Cancel
+          </Button>
         </div>
       </div>
       
-      <form onSubmit={handleSubmit}>
-        <div className="form-section">
-          <h3>Basic Information</h3>
+      <form onSubmit={handleSubmit} className="divide-y">
+        <div className="p-6">
+          <h3 className="text-base font-semibold text-primary mb-4">Basic Information</h3>
           
-          <div className="form-group">
-            <label htmlFor="name">Name*</label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleContentTypeChange}
-              disabled={!!contentType} // Can't change name when editing
-              required
-              placeholder="e.g. banner, product, article"
-            />
-            <small>Technical name (lowercase, no spaces)</small>
-          </div>
-          
-          <div className="form-group">
-            <label htmlFor="displayName">Display Name</label>
-            <input
-              type="text"
-              id="displayName"
-              name="displayName"
-              value={formData.displayName}
-              onChange={handleContentTypeChange}
-              placeholder="e.g. Banner, Product, Article"
-            />
-            <small>Human-readable name</small>
-          </div>
-          
-          <div className="form-group">
-            <label htmlFor="description">Description</label>
-            <textarea
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleContentTypeChange}
-              placeholder="Describe the purpose of this content type"
-              rows={3}
-            />
+          <div className="space-y-4">
+            <div className="grid gap-2">
+              <Label htmlFor="name">Name*</Label>
+              <Input
+                id="name"
+                name="name"
+                value={formData.name}
+                onChange={handleContentTypeChange}
+                disabled={!!contentType} // Can't change name when editing
+                required
+                placeholder="e.g. banner, product, article"
+              />
+              <p className="text-xs text-muted-foreground">Technical name (lowercase, no spaces)</p>
+            </div>
+            
+            <div className="grid gap-2">
+              <Label htmlFor="displayName">Display Name</Label>
+              <Input
+                id="displayName"
+                name="displayName"
+                value={formData.displayName}
+                onChange={handleContentTypeChange}
+                placeholder="e.g. Banner, Product, Article"
+              />
+              <p className="text-xs text-muted-foreground">Human-readable name</p>
+            </div>
+            
+            <div className="grid gap-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                name="description"
+                value={formData.description}
+                onChange={handleContentTypeChange}
+                placeholder="Describe the purpose of this content type"
+                rows={3}
+              />
+            </div>
           </div>
         </div>
         
-        <div className="form-section">
-          <h3>Properties</h3>
+        <div className="p-6">
+          <h3 className="text-base font-semibold text-primary mb-4">Properties</h3>
           
-          <div className="properties-list">
+          <div className="mb-6">
             {formData.properties.length === 0 ? (
-              <div className="empty-properties">
-                <p>No properties defined yet. Add some below.</p>
+              <div className="py-12 text-center bg-muted/50 rounded-lg">
+                <p className="text-muted-foreground">No properties defined yet. Add some below.</p>
               </div>
             ) : (
-              <table className="properties-table">
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Display Name</th>
-                    <th>Type</th>
-                    <th>Required</th>
-                    <th>Multiple</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {formData.properties.map((property, index) => (
-                    <tr key={index}>
-                      <td>{property.name}</td>
-                      <td>{property.displayName || '-'}</td>
-                      <td>{property.type}</td>
-                      <td>{property.required ? 'Yes' : 'No'}</td>
-                      <td>{property.multiple ? 'Yes' : 'No'}</td>
-                      <td>
-                        <div className="action-buttons">
-                          <button 
-                            type="button"
-                            className="icon-btn"
-                            onClick={() => movePropertyUp(index)}
-                            disabled={index === 0}
-                            title="Move Up"
-                          >
-                            <FiArrowUp />
-                          </button>
-                          <button 
-                            type="button"
-                            className="icon-btn"
-                            onClick={() => movePropertyDown(index)}
-                            disabled={index === formData.properties.length - 1}
-                            title="Move Down"
-                          >
-                            <FiArrowDown />
-                          </button>
-                          <button 
-                            type="button"
-                            className="icon-btn edit"
-                            onClick={() => editProperty(index)}
-                            title="Edit"
-                          >
-                            <FiEdit2 />
-                          </button>
-                          <button 
-                            type="button"
-                            className="icon-btn delete"
-                            onClick={() => deleteProperty(index)}
-                            title="Delete"
-                          >
-                            <FiTrash2 />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <div className="border rounded-lg overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Display Name</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Required</TableHead>
+                      <TableHead>Multiple</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {formData.properties.map((property, index) => (
+                      <TableRow key={index}>
+                        <TableCell className="font-medium">{property.name}</TableCell>
+                        <TableCell>{property.displayName || '-'}</TableCell>
+                        <TableCell>{property.type}</TableCell>
+                        <TableCell>{property.required ? 'Yes' : 'No'}</TableCell>
+                        <TableCell>{property.multiple ? 'Yes' : 'No'}</TableCell>
+                        <TableCell>
+                          <div className="flex justify-end space-x-1">
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => movePropertyUp(index)}
+                              disabled={index === 0}
+                              title="Move Up"
+                            >
+                              <ArrowUp className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => movePropertyDown(index)}
+                              disabled={index === formData.properties.length - 1}
+                              title="Move Down"
+                            >
+                              <ArrowDown className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => editProperty(index)}
+                              title="Edit"
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => deleteProperty(index)}
+                              title="Delete"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             )}
           </div>
           
-          <div className="property-form">
-            <h4>{editingPropertyIndex >= 0 ? 'Edit Property' : 'Add Property'}</h4>
-            
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="propertyName">Name*</label>
-                <input
-                  type="text"
-                  id="propertyName"
-                  name="name"
-                  value={currentProperty.name}
-                  onChange={handlePropertyChange}
-                  placeholder="e.g. title, description, image"
-                />
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="propertyDisplayName">Display Name</label>
-                <input
-                  type="text"
-                  id="propertyDisplayName"
-                  name="displayName"
-                  value={currentProperty.displayName}
-                  onChange={handlePropertyChange}
-                  placeholder="e.g. Title, Description, Image"
-                />
-              </div>
-            </div>
-            
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="propertyType">Type*</label>
-                <select
-                  id="propertyType"
-                  name="type"
-                  value={currentProperty.type}
-                  onChange={handlePropertyChange}
-                >
-                  <option value="String">String</option>
-                  <option value="Text">Text</option>
-                  <option value="Html">Rich Text (HTML)</option>
-                  <option value="Boolean">Boolean</option>
-                  <option value="Long">Number (Integer)</option>
-                  <option value="Double">Number (Decimal)</option>
-                  <option value="Date">Date</option>
-                  <option value="Link">Link</option>
-                  <option value="Image">Image</option>
-                  <option value="Reference">Reference</option>
-                </select>
-              </div>
-              
-              <div className="form-group checkbox-group">
-                <div className="checkbox-row">
-                  <label>
-                    <input
-                      type="checkbox"
-                      name="required"
-                      checked={currentProperty.required}
-                      onChange={handlePropertyChange}
-                    />
-                    Required
-                  </label>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                {editingPropertyIndex >= 0 ? 'Edit Property' : 'Add Property'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="propertyName">Name*</Label>
+                  <Input
+                    id="propertyName"
+                    name="name"
+                    value={currentProperty.name}
+                    onChange={handlePropertyChange}
+                    placeholder="e.g. title, description, image"
+                  />
                 </div>
                 
-                <div className="checkbox-row">
-                  <label>
-                    <input
-                      type="checkbox"
-                      name="multiple"
-                      checked={currentProperty.multiple}
-                      onChange={handlePropertyChange}
-                    />
-                    Multiple Values
-                  </label>
+                <div className="grid gap-2">
+                  <Label htmlFor="propertyDisplayName">Display Name</Label>
+                  <Input
+                    id="propertyDisplayName"
+                    name="displayName"
+                    value={currentProperty.displayName || ''}
+                    onChange={handlePropertyChange}
+                    placeholder="e.g. Title, Description, Image"
+                  />
                 </div>
               </div>
-            </div>
-            
-            <div className="property-actions">
-              <button 
-                type="button" 
-                className="btn btn-primary" 
-                onClick={addProperty}
-              >
-                {editingPropertyIndex >= 0 ? (
-                  <>Update Property</>
-                ) : (
-                  <><FiPlus /> Add Property</>
-                )}
-              </button>
               
-              {editingPropertyIndex >= 0 && (
-                <button 
-                  type="button" 
-                  className="btn btn-outline" 
-                  onClick={cancelPropertyEdit}
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="grid gap-2">
+                  <Label htmlFor="propertyType">Type*</Label>
+                  <Select 
+                    value={currentProperty.type} 
+                    onValueChange={(value) => handleSelectChange('type', value)}
+                  >
+                    <SelectTrigger id="propertyType">
+                      <SelectValue placeholder="Select a type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="String">String</SelectItem>
+                      <SelectItem value="Text">Text</SelectItem>
+                      <SelectItem value="Html">Rich Text (HTML)</SelectItem>
+                      <SelectItem value="Boolean">Boolean</SelectItem>
+                      <SelectItem value="Long">Number (Integer)</SelectItem>
+                      <SelectItem value="Double">Number (Decimal)</SelectItem>
+                      <SelectItem value="Date">Date</SelectItem>
+                      <SelectItem value="Link">Link</SelectItem>
+                      <SelectItem value="Image">Image</SelectItem>
+                      <SelectItem value="Reference">Reference</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="required"
+                      checked={currentProperty.required}
+                      onCheckedChange={(checked) => handleCheckboxChange('required', checked as boolean)}
+                    />
+                    <Label htmlFor="required" className="cursor-pointer">Required</Label>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="multiple"
+                      checked={currentProperty.multiple}
+                      onCheckedChange={(checked) => handleCheckboxChange('multiple', checked as boolean)}
+                    />
+                    <Label htmlFor="multiple" className="cursor-pointer">Multiple Values</Label>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex justify-end space-x-3">
+                <Button 
+                  onClick={addProperty}
+                  disabled={!currentProperty.name || !currentProperty.type}
                 >
-                  Cancel
-                </button>
-              )}
-            </div>
-          </div>
+                  {editingPropertyIndex >= 0 ? (
+                    'Update Property'
+                  ) : (
+                    <>
+                      <PlusCircle className="mr-2 h-4 w-4" /> Add Property
+                    </>
+                  )}
+                </Button>
+                
+                {editingPropertyIndex >= 0 && (
+                  <Button 
+                    variant="outline" 
+                    onClick={cancelPropertyEdit}
+                  >
+                    Cancel
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </form>
     </div>

@@ -1,7 +1,9 @@
-// src/components/AuthForm.tsx
-import React, { useState, ChangeEvent, FormEvent } from 'react';
+import { useState, ChangeEvent, FormEvent } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { Auth, AuthFormProps } from '../types';
-import './AuthForm.css';
 
 const AuthForm: React.FC<AuthFormProps> = ({ onLogin }) => {
   const [credentials, setCredentials] = useState<Auth>({
@@ -41,45 +43,53 @@ const AuthForm: React.FC<AuthFormProps> = ({ onLogin }) => {
   };
   
   return (
-    <div className="auth-container">
-      <form className="auth-form" onSubmit={handleSubmit}>
-        <h1>Bloomreach Management App</h1>
-        <p className="auth-description">
-          Connect to your Bloomreach instance to manage content types and components
-        </p>
-        
-        <div className="form-group">
-          <label htmlFor="brxHost">Bloomreach Host</label>
-          <input
-            type="text"
-            id="brxHost"
-            name="brxHost"
-            value={credentials.brxHost}
-            onChange={handleChange}
-            placeholder="https://your-bloomreach-host.com"
-            required
-          />
-          <small>The URL of your Bloomreach instance</small>
-        </div>
-        
-        <div className="form-group">
-          <label htmlFor="authToken">Authentication Token</label>
-          <input
-            type="password"
-            id="authToken"
-            name="authToken"
-            value={credentials.authToken}
-            onChange={handleChange}
-            placeholder="Your x-auth-token"
-            required
-          />
-          <small>Your Bloomreach API authentication token</small>
-        </div>
-        
-        <button type="submit" className="btn btn-primary btn-block">
-          Connect
-        </button>
-      </form>
+    <div className="flex justify-center items-center min-h-screen bg-background p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="space-y-1 text-center">
+          <CardTitle className="text-2xl font-bold text-primary">Bloomreach Management App</CardTitle>
+          <CardDescription>
+            Connect to your Bloomreach instance to manage content types and components
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="brxHost">Bloomreach Host</Label>
+              <Input
+                id="brxHost"
+                name="brxHost"
+                value={credentials.brxHost}
+                onChange={handleChange}
+                placeholder="https://your-bloomreach-host.com"
+                required
+              />
+              <p className="text-xs text-muted-foreground">
+                The URL of your Bloomreach instance
+              </p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="authToken">Authentication Token</Label>
+              <Input
+                type="password"
+                id="authToken"
+                name="authToken"
+                value={credentials.authToken}
+                onChange={handleChange}
+                placeholder="Your x-auth-token"
+                required
+              />
+              <p className="text-xs text-muted-foreground">
+                Your Bloomreach API authentication token
+              </p>
+            </div>
+            
+            <Button type="submit" className="w-full">
+              Connect
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 };
