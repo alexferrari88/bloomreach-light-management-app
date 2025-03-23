@@ -249,6 +249,7 @@ const ContentTypeEditor: React.FC<ContentTypeEditorProps> = ({
           <Button
             onClick={() => handleSubmit({ preventDefault: () => {} } as any)}
             className="cursor-pointer"
+            type="submit"
           >
             <Save className="mr-2 h-4 w-4" /> Save
           </Button>
@@ -256,6 +257,7 @@ const ContentTypeEditor: React.FC<ContentTypeEditorProps> = ({
             variant="outline"
             onClick={onCancel}
             className="cursor-pointer"
+            type="button"
           >
             <X className="mr-2 h-4 w-4" /> Cancel
           </Button>
@@ -360,6 +362,7 @@ const ContentTypeEditor: React.FC<ContentTypeEditorProps> = ({
                               onClick={() => movePropertyUp(index)}
                               disabled={index === 0}
                               title="Move Up"
+                              type="button"
                             >
                               <ArrowUp className="h-4 w-4" />
                             </Button>
@@ -371,6 +374,7 @@ const ContentTypeEditor: React.FC<ContentTypeEditorProps> = ({
                                 index === formData.properties.length - 1
                               }
                               title="Move Down"
+                              type="button"
                             >
                               <ArrowDown className="h-4 w-4" />
                             </Button>
@@ -379,6 +383,7 @@ const ContentTypeEditor: React.FC<ContentTypeEditorProps> = ({
                               size="icon"
                               onClick={() => editProperty(index)}
                               title="Edit"
+                              type="button"
                             >
                               <Edit2 className="h-4 w-4" />
                             </Button>
@@ -387,6 +392,7 @@ const ContentTypeEditor: React.FC<ContentTypeEditorProps> = ({
                               size="icon"
                               onClick={() => deleteProperty(index)}
                               title="Delete"
+                              type="button"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -487,6 +493,7 @@ const ContentTypeEditor: React.FC<ContentTypeEditorProps> = ({
 
               <div className="flex justify-end space-x-3">
                 <Button
+                  type="button"
                   onClick={addProperty}
                   disabled={!currentProperty.name || !currentProperty.type}
                 >
@@ -500,7 +507,11 @@ const ContentTypeEditor: React.FC<ContentTypeEditorProps> = ({
                 </Button>
 
                 {editingPropertyIndex >= 0 && (
-                  <Button variant="outline" onClick={cancelPropertyEdit}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={cancelPropertyEdit}
+                  >
                     Cancel
                   </Button>
                 )}
