@@ -119,13 +119,6 @@ export interface Change {
   timestamp: string;
 }
 
-export interface ChangeHistoryProps {
-  changes: Change[];
-  onClear: () => void;
-  onExport: () => void;
-  onDownloadModifiedFiles: () => void;
-}
-
 // React Component Props Types
 
 export interface AuthFormProps {
@@ -158,6 +151,8 @@ export interface ChangeHistoryProps {
   changes: Change[];
   onClear: () => void;
   onExport: () => void;
+  onDownloadModifiedFiles: () => void;
+  onDownloadGitPatch: () => void;
 }
 
 export interface ChangeDetailProps {
