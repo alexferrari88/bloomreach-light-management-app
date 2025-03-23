@@ -171,6 +171,18 @@ const ContentTypeEditor: React.FC<ContentTypeEditorProps> = ({
   const editProperty = (index: number) => {
     setCurrentProperty(formData.properties[index]);
     setEditingPropertyIndex(index);
+    // Use setTimeout to ensure the UI updates first
+    setTimeout(() => {
+      // Get element by ID (more reliable than ref for components)
+      const editorElement = document.getElementById("property-editor-section");
+      if (editorElement) {
+        // Scroll the element into view
+        editorElement.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }
+    }, 150);
   };
 
   // Delete a property
@@ -349,7 +361,11 @@ const ContentTypeEditor: React.FC<ContentTypeEditorProps> = ({
                   </TableHeader>
                   <TableBody>
                     {formData.properties.map((property, index) => (
-                      <TableRow key={index}>
+                      <TableRow
+                        key={index}
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={() => editProperty(index)}
+                      >
                         <TableCell className="font-medium">
                           {property.name}
                         </TableCell>
@@ -361,7 +377,7 @@ const ContentTypeEditor: React.FC<ContentTypeEditorProps> = ({
                         <TableCell>
                           {property.multiple ? "Yes" : "No"}
                         </TableCell>
-                        <TableCell>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
                           <div className="flex justify-end space-x-1">
                             <Button
                               variant="ghost"
@@ -413,118 +429,122 @@ const ContentTypeEditor: React.FC<ContentTypeEditorProps> = ({
             )}
           </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {editingPropertyIndex >= 0 ? "Edit Property" : "Add Property"}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="propertyName">Name*</Label>
-                  <Input
-                    id="propertyName"
-                    name="name"
-                    value={currentProperty.name}
-                    onChange={handlePropertyChange}
-                    placeholder="e.g. title, description, image"
-                  />
-                </div>
-
-                <div className="grid gap-2">
-                  <Label htmlFor="propertyDisplayName">Display Name</Label>
-                  <Input
-                    id="propertyDisplayName"
-                    name="displayName"
-                    value={currentProperty.displayName || ""}
-                    onChange={handlePropertyChange}
-                    placeholder="e.g. Title, Description, Image"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="grid gap-2">
-                  <Label htmlFor="propertyType">Type*</Label>
-                  <Select
-                    value={currentProperty.type}
-                    onValueChange={(value) => handleSelectChange("type", value)}
-                  >
-                    <SelectTrigger id="propertyType">
-                      <SelectValue placeholder="Select a type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="String">String</SelectItem>
-                      <SelectItem value="Text">Text</SelectItem>
-                      <SelectItem value="Html">Rich Text (HTML)</SelectItem>
-                      <SelectItem value="Boolean">Boolean</SelectItem>
-                      <SelectItem value="Long">Number (Integer)</SelectItem>
-                      <SelectItem value="Double">Number (Decimal)</SelectItem>
-                      <SelectItem value="Date">Date</SelectItem>
-                      <SelectItem value="Link">Link</SelectItem>
-                      <SelectItem value="Image">Image</SelectItem>
-                      <SelectItem value="Reference">Reference</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="required"
-                      checked={currentProperty.required}
-                      onCheckedChange={(checked) =>
-                        handleCheckboxChange("required", checked as boolean)
-                      }
+          <div id="property-editor-section">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  {editingPropertyIndex >= 0 ? "Edit Field" : "Add Field"}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="propertyName">Name*</Label>
+                    <Input
+                      id="propertyName"
+                      name="name"
+                      value={currentProperty.name}
+                      onChange={handlePropertyChange}
+                      placeholder="e.g. title, description, image"
                     />
-                    <Label htmlFor="required" className="cursor-pointer">
-                      Required
-                    </Label>
                   </div>
 
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="multiple"
-                      checked={currentProperty.multiple}
-                      onCheckedChange={(checked) =>
-                        handleCheckboxChange("multiple", checked as boolean)
-                      }
+                  <div className="grid gap-2">
+                    <Label htmlFor="propertyDisplayName">Display Name</Label>
+                    <Input
+                      id="propertyDisplayName"
+                      name="displayName"
+                      value={currentProperty.displayName || ""}
+                      onChange={handlePropertyChange}
+                      placeholder="e.g. Title, Description, Image"
                     />
-                    <Label htmlFor="multiple" className="cursor-pointer">
-                      Multiple Values
-                    </Label>
                   </div>
                 </div>
-              </div>
 
-              <div className="flex justify-end space-x-3">
-                <Button
-                  type="button"
-                  onClick={addProperty}
-                  disabled={!currentProperty.name || !currentProperty.type}
-                >
-                  {editingPropertyIndex >= 0 ? (
-                    "Update Property"
-                  ) : (
-                    <>
-                      <PlusCircle className="mr-2 h-4 w-4" /> Add Property
-                    </>
-                  )}
-                </Button>
+                <div className="grid grid-cols-2 gap-4 mb-6">
+                  <div className="grid gap-2">
+                    <Label htmlFor="propertyType">Type*</Label>
+                    <Select
+                      value={currentProperty.type}
+                      onValueChange={(value) =>
+                        handleSelectChange("type", value)
+                      }
+                    >
+                      <SelectTrigger id="propertyType">
+                        <SelectValue placeholder="Select a type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="String">String</SelectItem>
+                        <SelectItem value="Text">Text</SelectItem>
+                        <SelectItem value="Html">Rich Text (HTML)</SelectItem>
+                        <SelectItem value="Boolean">Boolean</SelectItem>
+                        <SelectItem value="Long">Number (Integer)</SelectItem>
+                        <SelectItem value="Double">Number (Decimal)</SelectItem>
+                        <SelectItem value="Date">Date</SelectItem>
+                        <SelectItem value="Link">Link</SelectItem>
+                        <SelectItem value="Image">Image</SelectItem>
+                        <SelectItem value="Reference">Reference</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                {editingPropertyIndex >= 0 && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="required"
+                        checked={currentProperty.required}
+                        onCheckedChange={(checked) =>
+                          handleCheckboxChange("required", checked as boolean)
+                        }
+                      />
+                      <Label htmlFor="required" className="cursor-pointer">
+                        Required
+                      </Label>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="multiple"
+                        checked={currentProperty.multiple}
+                        onCheckedChange={(checked) =>
+                          handleCheckboxChange("multiple", checked as boolean)
+                        }
+                      />
+                      <Label htmlFor="multiple" className="cursor-pointer">
+                        Multiple Values
+                      </Label>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end space-x-3">
                   <Button
                     type="button"
-                    variant="outline"
-                    onClick={cancelPropertyEdit}
+                    onClick={addProperty}
+                    disabled={!currentProperty.name || !currentProperty.type}
                   >
-                    Cancel
+                    {editingPropertyIndex >= 0 ? (
+                      "Update Property"
+                    ) : (
+                      <>
+                        <PlusCircle className="mr-2 h-4 w-4" /> Add Property
+                      </>
+                    )}
                   </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+
+                  {editingPropertyIndex >= 0 && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={cancelPropertyEdit}
+                    >
+                      Cancel
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </form>
     </div>
