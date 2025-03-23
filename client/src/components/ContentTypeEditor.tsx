@@ -60,12 +60,20 @@ const ContentTypeEditor: React.FC<ContentTypeEditorProps> = ({
   // Load content type data if editing an existing one
   useEffect(() => {
     if (contentType) {
+      // Normalize the API response to use properties in our UI
+      // The API uses 'fields' but our UI uses 'properties'
+      const contentTypeProperties =
+        contentType.fields || contentType.properties || [];
+
+      // Log the content type structure for debugging
+      console.log("Content type structure:", contentType);
+
       // Transform the content type data to match our form structure
       const transformedData: ContentType = {
         name: contentType.name || contentType.id || "",
         displayName: contentType.displayName || "",
         description: contentType.description || "",
-        properties: contentType.properties || [],
+        properties: contentTypeProperties,
         resourceVersion: contentType.resourceVersion || undefined,
       };
 
