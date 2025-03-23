@@ -116,7 +116,7 @@ function App() {
     // Simple LCS (Longest Common Subsequence) implementation
     function findLCS() {
       const matrix = Array(oldLines.length + 1)
-        .fill()
+        .fill(null)
         .map(() => Array(newLines.length + 1).fill(0));
 
       // Fill the matrix
