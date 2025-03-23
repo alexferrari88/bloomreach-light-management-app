@@ -1,7 +1,7 @@
+// client/src/App.tsx
 import { Toaster } from "@/components/ui-providers/toast-provider";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import axios from "axios";
 import { saveAs } from "file-saver";
 import JSZip from "jszip";
 import { LogOut } from "lucide-react";
@@ -11,7 +11,9 @@ import AuthForm from "./components/AuthForm";
 import ChangeHistory from "./components/ChangeHistory";
 import ComponentManager from "./components/ComponentManager";
 import ContentTypeManager from "./components/ContentTypeManager";
-import { ApiRequest, ApiResponse, Auth, Change } from "./types";
+import OperationQueue from "./components/OperationQueue";
+import { ApiProvider } from "./contexts/ApiContext";
+import { Auth, Change } from "./types";
 
 function App() {
   // State for authentication
@@ -82,8 +84,7 @@ function App() {
   const clearChangeHistory = () => {
     if (window.confirm("Are you sure you want to clear the change history?")) {
       setChanges([]);
-      toast({
-        title: "History cleared",
+      toast("History cleared", {
         description: "Change history has been cleared",
         duration: 3000,
       });
@@ -100,61 +101,69 @@ function App() {
   };
 
   // Create a line-based diff algorithm that shows only changed lines with context
-  function createUnifiedDiff(oldStr: string, newStr: string, context: number = 3): string {
+  function createUnifiedDiff(
+    oldStr: string,
+    newStr: string,
+    context: number = 3
+  ): string {
     // Split the strings into lines
-    const oldLines = oldStr.split('\n');
-    const newLines = newStr.split('\n');
-    
+    const oldLines = oldStr.split("\n");
+    const newLines = newStr.split("\n");
+
     // Find matching lines
     const hunks = [];
-    
+
     // Simple LCS (Longest Common Subsequence) implementation
     function findLCS() {
-      const matrix = Array(oldLines.length + 1).fill().map(() => 
-        Array(newLines.length + 1).fill(0)
-      );
-      
+      const matrix = Array(oldLines.length + 1)
+        .fill()
+        .map(() => Array(newLines.length + 1).fill(0));
+
       // Fill the matrix
       for (let i = 1; i <= oldLines.length; i++) {
         for (let j = 1; j <= newLines.length; j++) {
-          if (oldLines[i-1] === newLines[j-1]) {
-            matrix[i][j] = matrix[i-1][j-1] + 1;
+          if (oldLines[i - 1] === newLines[j - 1]) {
+            matrix[i][j] = matrix[i - 1][j - 1] + 1;
           } else {
-            matrix[i][j] = Math.max(matrix[i-1][j], matrix[i][j-1]);
+            matrix[i][j] = Math.max(matrix[i - 1][j], matrix[i][j - 1]);
           }
         }
       }
-      
+
       // Backtrack to find the sequence
       let i = oldLines.length;
       let j = newLines.length;
       const lcs = [];
-      
+
       while (i > 0 && j > 0) {
-        if (oldLines[i-1] === newLines[j-1]) {
-          lcs.unshift({oldIndex: i-1, newIndex: j-1, line: oldLines[i-1]});
+        if (oldLines[i - 1] === newLines[j - 1]) {
+          lcs.unshift({
+            oldIndex: i - 1,
+            newIndex: j - 1,
+            line: oldLines[i - 1],
+          });
           i--;
           j--;
-        } else if (matrix[i-1][j] > matrix[i][j-1]) {
+        } else if (matrix[i - 1][j] > matrix[i][j - 1]) {
           i--;
         } else {
           j--;
         }
       }
-      
+
       return lcs;
     }
-    
+
     // Find the longest common subsequence
     const lcs = findLCS();
-    
+
     // Use LCS to identify changes
     let oldIndex = 0;
     let newIndex = 0;
-    
+
     // Build hunks of changes
     let currentHunk = null;
-    
+
     for (const match of lcs) {
       // Process deletions
       while (oldIndex < match.oldIndex) {
@@ -164,22 +173,22 @@ function App() {
             oldCount: 0,
             newStart: Math.max(0, newIndex - context),
             newCount: 0,
-            lines: []
+            lines: [],
           };
-          
+
           // Add context lines before
           for (let i = currentHunk.oldStart; i < oldIndex; i++) {
-            currentHunk.lines.push(' ' + oldLines[i]);
+            currentHunk.lines.push(" " + oldLines[i]);
             currentHunk.oldCount++;
             currentHunk.newCount++;
           }
         }
-        
-        currentHunk.lines.push('-' + oldLines[oldIndex]);
+
+        currentHunk.lines.push("-" + oldLines[oldIndex]);
         currentHunk.oldCount++;
         oldIndex++;
       }
-      
+
       // Process additions
       while (newIndex < match.newIndex) {
         if (!currentHunk) {
@@ -188,51 +197,52 @@ function App() {
             oldCount: 0,
             newStart: Math.max(0, newIndex - context),
             newCount: 0,
-            lines: []
+            lines: [],
           };
-          
+
           // Add context lines before
           for (let i = currentHunk.oldStart; i < oldIndex; i++) {
-            currentHunk.lines.push(' ' + oldLines[i]);
+            currentHunk.lines.push(" " + oldLines[i]);
             currentHunk.oldCount++;
             currentHunk.newCount++;
           }
         }
-        
-        currentHunk.lines.push('+' + newLines[newIndex]);
+
+        currentHunk.lines.push("+" + newLines[newIndex]);
         currentHunk.newCount++;
         newIndex++;
       }
-      
+
       // Process matching line
       if (currentHunk) {
-        currentHunk.lines.push(' ' + oldLines[oldIndex]);
+        currentHunk.lines.push(" " + oldLines[oldIndex]);
         currentHunk.oldCount++;
         currentHunk.newCount++;
       }
-      
+
       oldIndex++;
       newIndex++;
-      
+
       // Finish hunk if we've reached the end of a change block
-      if (currentHunk && 
-          oldIndex < oldLines.length && 
-          newIndex < newLines.length && 
-          oldLines[oldIndex] === newLines[newIndex]) {
-        
+      if (
+        currentHunk &&
+        oldIndex < oldLines.length &&
+        newIndex < newLines.length &&
+        oldLines[oldIndex] === newLines[newIndex]
+      ) {
         // Add context lines after
         const contextEnd = Math.min(oldIndex + context, oldLines.length);
         for (let i = oldIndex; i < contextEnd; i++) {
-          currentHunk.lines.push(' ' + oldLines[i]);
+          currentHunk.lines.push(" " + oldLines[i]);
           currentHunk.oldCount++;
           currentHunk.newCount++;
         }
-        
+
         hunks.push(currentHunk);
         currentHunk = null;
       }
     }
-    
+
     // Process any remaining deletions
     while (oldIndex < oldLines.length) {
       if (!currentHunk) {
@@ -241,22 +251,22 @@ function App() {
           oldCount: 0,
           newStart: Math.max(0, newIndex - context),
           newCount: 0,
-          lines: []
+          lines: [],
         };
-        
+
         // Add context lines before
         for (let i = currentHunk.oldStart; i < oldIndex; i++) {
-          currentHunk.lines.push(' ' + oldLines[i]);
+          currentHunk.lines.push(" " + oldLines[i]);
           currentHunk.oldCount++;
           currentHunk.newCount++;
         }
       }
-      
-      currentHunk.lines.push('-' + oldLines[oldIndex]);
+
+      currentHunk.lines.push("-" + oldLines[oldIndex]);
       currentHunk.oldCount++;
       oldIndex++;
     }
-    
+
     // Process any remaining additions
     while (newIndex < newLines.length) {
       if (!currentHunk) {
@@ -265,35 +275,37 @@ function App() {
           oldCount: 0,
           newStart: Math.max(0, newIndex - context),
           newCount: 0,
-          lines: []
+          lines: [],
         };
-        
+
         // Add context lines before
         for (let i = currentHunk.oldStart; i < oldIndex; i++) {
-          currentHunk.lines.push(' ' + oldLines[i]);
+          currentHunk.lines.push(" " + oldLines[i]);
           currentHunk.oldCount++;
           currentHunk.newCount++;
         }
       }
-      
-      currentHunk.lines.push('+' + newLines[newIndex]);
+
+      currentHunk.lines.push("+" + newLines[newIndex]);
       currentHunk.newCount++;
       newIndex++;
     }
-    
+
     // Add the last hunk if it exists
     if (currentHunk) {
       hunks.push(currentHunk);
     }
-    
+
     // Format the unified diff
-    let diffOutput = '';
-    
-    hunks.forEach(hunk => {
-      diffOutput += `@@ -${hunk.oldStart + 1},${hunk.oldCount} +${hunk.newStart + 1},${hunk.newCount} @@\n`;
-      diffOutput += hunk.lines.join('\n') + '\n';
+    let diffOutput = "";
+
+    hunks.forEach((hunk) => {
+      diffOutput += `@@ -${hunk.oldStart + 1},${hunk.oldCount} +${
+        hunk.newStart + 1
+      },${hunk.newCount} @@\n`;
+      diffOutput += hunk.lines.join("\n") + "\n";
     });
-    
+
     return diffOutput;
   }
 
@@ -353,7 +365,7 @@ function App() {
       modifiedEntitiesMap.forEach((change) => {
         const filePath = getFilePath(change.entityType, change.entityName);
         const formattedContent = JSON.stringify(change.entityData, null, 2);
-        
+
         if (change.action === "CREATE") {
           // Format for new file
           patchContent += `diff --git a/${filePath} b/${filePath}\n`;
@@ -361,42 +373,50 @@ function App() {
           patchContent += `index 0000000..${timestamp.toString(16)}\n`;
           patchContent += `--- /dev/null\n`;
           patchContent += `+++ b/${filePath}\n`;
-          patchContent += `@@ -0,0 +1,${formattedContent.split('\n').length} @@\n`;
-          
+          patchContent += `@@ -0,0 +1,${
+            formattedContent.split("\n").length
+          } @@\n`;
+
           // Add the new file content with + prefix
-          formattedContent.split('\n').forEach(line => {
+          formattedContent.split("\n").forEach((line) => {
             patchContent += `+${line}\n`;
           });
         } else if (change.action === "UPDATE" && change.previousData) {
           // Format for modified file using our improved diff algorithm
           const previousContent = JSON.stringify(change.previousData, null, 2);
-          
+
           patchContent += `diff --git a/${filePath} b/${filePath}\n`;
-          patchContent += `index ${(timestamp-100).toString(16)}..${timestamp.toString(16)} 100644\n`;
+          patchContent += `index ${(timestamp - 100).toString(
+            16
+          )}..${timestamp.toString(16)} 100644\n`;
           patchContent += `--- a/${filePath}\n`;
           patchContent += `+++ b/${filePath}\n`;
-          
+
           // Generate a proper line-based diff with context
-          patchContent += createUnifiedDiff(previousContent, formattedContent, 3);
+          patchContent += createUnifiedDiff(
+            previousContent,
+            formattedContent,
+            3
+          );
         }
       });
-      
+
       // Process deleted files
       deletedEntitiesMap.forEach((change) => {
         if (change.previousData) {
           const filePath = getFilePath(change.entityType, change.entityName);
           const previousContent = JSON.stringify(change.previousData, null, 2);
-          const prevLines = previousContent.split('\n');
-          
+          const prevLines = previousContent.split("\n");
+
           patchContent += `diff --git a/${filePath} b/${filePath}\n`;
           patchContent += `deleted file mode 100644\n`;
-          patchContent += `index ${(timestamp-100).toString(16)}..0000000\n`;
+          patchContent += `index ${(timestamp - 100).toString(16)}..0000000\n`;
           patchContent += `--- a/${filePath}\n`;
           patchContent += `+++ /dev/null\n`;
           patchContent += `@@ -1,${prevLines.length} +0,0 @@\n`;
-          
+
           // Add the deleted content with - prefix
-          prevLines.forEach(line => {
+          prevLines.forEach((line) => {
             patchContent += `-${line}\n`;
           });
         }
@@ -405,7 +425,7 @@ function App() {
       // Create a blob and download it
       const blob = new Blob([patchContent], { type: "text/plain" });
       saveAs(blob, "bloomreach-changes.patch");
-      
+
       toast.success("Git patch created successfully");
     } catch (error) {
       console.error("Error generating git patch:", error);
@@ -645,117 +665,6 @@ function App() {
     return script;
   };
 
-  // API request handler with detailed change tracking
-  const makeApiRequest = async (params: ApiRequest): Promise<ApiResponse> => {
-    try {
-      // For update and delete operations, fetch the current state first
-      let previousData = null;
-
-      if (
-        [
-          "update",
-          "updateGroup",
-          "updateComponent",
-          "delete",
-          "deleteGroup",
-          "deleteComponent",
-        ].includes(params.operation)
-      ) {
-        try {
-          // Determine the get operation based on the current operation
-          let getOperation: string;
-          if (params.operation.includes("Group")) {
-            getOperation = "getGroup";
-          } else if (
-            params.operation.includes("Component") &&
-            !params.operation.includes("Group")
-          ) {
-            getOperation = "getComponent";
-          } else {
-            getOperation = "getById";
-          }
-
-          // Make API request to get current state
-          const getResponse = await axios.post<ApiResponse>("/api/execute", {
-            ...params,
-            operation: getOperation,
-            brxHost: auth.brxHost,
-            authToken: auth.authToken,
-          });
-
-          // Store the current state
-          if (getResponse.data.success) {
-            previousData = getResponse.data.data;
-          }
-        } catch (error) {
-          console.warn("Could not fetch previous state:", error);
-          // Continue with the operation even if we can't get the previous state
-        }
-      }
-
-      // Now make the actual API request
-      const response = await axios.post<ApiResponse>("/api/execute", {
-        ...params,
-        brxHost: auth.brxHost,
-        authToken: auth.authToken,
-      });
-
-      // Record the change if it's a mutation operation
-      if (
-        [
-          "create",
-          "update",
-          "delete",
-          "createGroup",
-          "updateGroup",
-          "deleteGroup",
-          "createComponent",
-          "updateComponent",
-          "deleteComponent",
-        ].includes(params.operation)
-      ) {
-        let action: "CREATE" | "UPDATE" | "DELETE" = "CREATE";
-        if (params.operation.startsWith("create")) action = "CREATE";
-        else if (params.operation.startsWith("update")) action = "UPDATE";
-        else if (params.operation.startsWith("delete")) action = "DELETE";
-
-        let entityType: string = "";
-        if (params.section === "contentTypes") {
-          entityType = "Content Type";
-        } else if (params.operation.includes("Group")) {
-          entityType = "Component Group";
-        } else {
-          entityType = "Component";
-        }
-
-        // Get entity name
-        let entityName: string = params.resourceId || "";
-        if (params.operation.includes("Group") && params.componentGroup) {
-          entityName = params.componentGroup;
-        }
-
-        // Store the entity data for creates and updates
-        const entityData = ["CREATE", "UPDATE"].includes(action)
-          ? params.resourceData || response.data.data
-          : null;
-
-        recordChange(action, entityType, entityName, entityData, previousData);
-      }
-
-      return response.data;
-    } catch (error: any) {
-      const errorMsg =
-        `${error.response?.data?.error}: ${error.response?.data?.details}` ||
-        error.message;
-
-      toast.error(errorMsg, {
-        duration: 5000,
-      });
-
-      throw error;
-    }
-  };
-
   return (
     <div className="min-h-screen bg-background">
       <Toaster />
@@ -763,74 +672,81 @@ function App() {
       {!isAuthenticated ? (
         <AuthForm onLogin={handleLogin} />
       ) : (
-        <div className="flex flex-col min-h-screen">
-          <header className="border-b bg-card py-4 px-6 flex justify-between items-center">
-            <h1 className="text-xl font-semibold text-primary">
-              Bloomreach Management App
-            </h1>
-            <div className="flex items-center gap-4">
-              <span className="text-muted-foreground text-sm">
-                {auth.brxHost}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleLogout}
-                className="cursor-pointer"
+        <ApiProvider auth={auth} recordChange={recordChange}>
+          <div className="flex flex-col min-h-screen">
+            <header className="border-b bg-card py-4 px-6 flex justify-between items-center">
+              <h1 className="text-xl font-semibold text-primary">
+                Bloomreach Management App
+              </h1>
+              <div className="flex items-center gap-4">
+                <span className="text-muted-foreground text-sm">
+                  {auth.brxHost}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleLogout}
+                  className="cursor-pointer"
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Logout
+                </Button>
+              </div>
+            </header>
+
+            <main className="flex-1 flex flex-col">
+              <Tabs
+                value={activeSection}
+                onValueChange={(value: string) =>
+                  setActiveSection(value as "contentTypes" | "components")
+                }
+                className="w-full"
               >
-                <LogOut className="mr-2 h-4 w-4" />
-                Logout
-              </Button>
-            </div>
-          </header>
-
-          <main className="flex-1 flex flex-col">
-            <Tabs
-              value={activeSection}
-              onValueChange={(value: string) =>
-                setActiveSection(value as "contentTypes" | "components")
-              }
-              className="w-full"
-            >
-              <div className="border-b bg-card">
-                <div className="container mx-auto">
-                  <TabsList className="h-12">
-                    <TabsTrigger
-                      value="contentTypes"
-                      className="flex-1 cursor-pointer"
-                    >
-                      Content Types
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="components"
-                      className="flex-1 cursor-pointer"
-                    >
-                      Components
-                    </TabsTrigger>
-                  </TabsList>
+                <div className="border-b bg-card">
+                  <div className="container mx-auto">
+                    <TabsList className="h-12">
+                      <TabsTrigger
+                        value="contentTypes"
+                        className="flex-1 cursor-pointer"
+                      >
+                        Content Types
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="components"
+                        className="flex-1 cursor-pointer"
+                      >
+                        Components
+                      </TabsTrigger>
+                    </TabsList>
+                  </div>
                 </div>
-              </div>
 
-              <div className="flex-1 overflow-auto">
-                <TabsContent value="contentTypes" className="mt-0 h-full">
-                  <ContentTypeManager makeApiRequest={makeApiRequest} />
-                </TabsContent>
-                <TabsContent value="components" className="mt-0 h-full">
-                  <ComponentManager makeApiRequest={makeApiRequest} />
-                </TabsContent>
+                <div className="flex-1 overflow-auto">
+                  <div className="container mx-auto px-6 py-6">
+                    {/* Add the OperationQueue component */}
+                    <OperationQueue />
 
-                <div className="container mx-auto px-6 pb-6">
-                  <ChangeHistory
-                    changes={changes}
-                    onClear={clearChangeHistory}
-                    onDownloadModifiedFiles={downloadModifiedFiles}
-                    onDownloadGitPatch={downloadGitPatch}
-                  />
+                    <TabsContent value="contentTypes" className="mt-0 p-0">
+                      <ContentTypeManager />
+                    </TabsContent>
+                    <TabsContent value="components" className="mt-0 p-0">
+                      <ComponentManager />
+                    </TabsContent>
+                  </div>
+
+                  <div className="container mx-auto px-6 pb-6">
+                    <ChangeHistory
+                      changes={changes}
+                      onClear={clearChangeHistory}
+                      onDownloadModifiedFiles={downloadModifiedFiles}
+                      onDownloadGitPatch={downloadGitPatch}
+                    />
+                  </div>
                 </div>
-              </div>
-            </Tabs>
-          </main>
-        </div>
+              </Tabs>
+            </main>
+          </div>
+        </ApiProvider>
       )}
     </div>
   );

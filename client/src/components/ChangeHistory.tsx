@@ -165,7 +165,7 @@ const ChangeHistory: React.FC<UpdatedChangeHistoryProps> = ({
                 <Badge
                   variant={
                     change.action === "CREATE"
-                      ? "success"
+                      ? "default"
                       : change.action === "UPDATE"
                       ? "default"
                       : "destructive"
@@ -197,7 +197,7 @@ const ChangeHistory: React.FC<UpdatedChangeHistoryProps> = ({
                 <Badge
                   variant={
                     selectedChange.action === "CREATE"
-                      ? "success"
+                      ? "default"
                       : selectedChange.action === "UPDATE"
                       ? "default"
                       : "destructive"
@@ -273,7 +273,7 @@ const ChangeHistory: React.FC<UpdatedChangeHistoryProps> = ({
                             <Badge
                               variant={
                                 entity.action === "CREATE"
-                                  ? "success"
+                                  ? "default"
                                   : "default"
                               }
                               className="font-normal"

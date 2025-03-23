@@ -1,3 +1,4 @@
+// client/src/components/ContentTypeManager.tsx
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -20,12 +21,13 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { ApiRequest, ContentType, ContentTypeManagerProps } from "../types";
+import { useApi } from "../contexts/ApiContext";
+import { ApiRequest, ContentType } from "../types";
 import ContentTypeEditor from "./ContentTypeEditor";
 
-const ContentTypeManager: React.FC<ContentTypeManagerProps> = ({
-  makeApiRequest,
-}) => {
+const ContentTypeManager: React.FC = () => {
+  const { queueOperation, executeOperation } = useApi();
+  
   const [contentTypes, setContentTypes] = useState<ContentType[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [contentTypeMode, setContentTypeMode] = useState<
@@ -35,7 +37,6 @@ const ContentTypeManager: React.FC<ContentTypeManagerProps> = ({
   const [editingContentType, setEditingContentType] =
     useState<ContentType | null>(null);
   const [jsonExport, setJsonExport] = useState<ContentType | null>(null);
-  // Using Sonner toast directly
 
   // Fetch content types when mode changes
   useEffect(() => {
@@ -55,7 +56,7 @@ const ContentTypeManager: React.FC<ContentTypeManagerProps> = ({
         authToken: "",
       };
 
-      const result = await makeApiRequest(params);
+      const result = await executeOperation(params);
 
       if (result.success && result.data) {
         setContentTypes(result.data);
@@ -80,7 +81,7 @@ const ContentTypeManager: React.FC<ContentTypeManagerProps> = ({
         authToken: "",
       };
 
-      const result = await makeApiRequest(params);
+      const result = await executeOperation(params);
 
       if (result.success && result.data) {
         // Include resource version for PUT operations
@@ -119,11 +120,20 @@ const ContentTypeManager: React.FC<ContentTypeManagerProps> = ({
         authToken: "",
       };
 
-      const result = await makeApiRequest(params);
+      // Use queue operation instead of makeApiRequest
+      const result = await queueOperation(
+        params, 
+        "DELETE", 
+        "Content Type", 
+        id, 
+        `Delete content type ${id}`
+      );
 
       if (result.success) {
-        toast.success(`Content type ${id} deleted successfully`);
-        fetchContentTypes();
+        toast.success(`Content type ${id} ${result.queued ? 'queued for deletion' : 'deleted successfully'}`);
+        if (!result.queued) {
+          fetchContentTypes();
+        }
       }
     } catch (error) {
       console.error("Failed to delete content type:", error);
@@ -146,6 +156,8 @@ const ContentTypeManager: React.FC<ContentTypeManagerProps> = ({
     try {
       const operation = contentType.resourceVersion ? "update" : "create";
       const resourceId = contentType.id || contentType.name;
+      const action = operation === "create" ? "CREATE" : "UPDATE";
+      const actionDescription = `${action === "CREATE" ? "Create" : "Update"} content type ${resourceId}`;
 
       const params: ApiRequest = {
         section: "contentTypes",
@@ -157,16 +169,25 @@ const ContentTypeManager: React.FC<ContentTypeManagerProps> = ({
         authToken: "",
       };
 
-      const result = await makeApiRequest(params);
+      // Use queue operation instead of makeApiRequest
+      const result = await queueOperation(
+        params, 
+        action, 
+        "Content Type", 
+        resourceId, 
+        actionDescription,
+        contentType.resourceVersion ? contentType : null
+      );
 
       if (result.success) {
         toast.success(
-          `Content type ${
-            operation === "create" ? "created" : "updated"
-          } successfully`
+          `Content type ${resourceId} ${result.queued ? 'queued for' : ''} ${operation === "create" ? "created" : "updated"} successfully`
         );
         setShowEditor(false);
-        fetchContentTypes();
+        
+        if (!result.queued) {
+          fetchContentTypes();
+        }
       }
     } catch (error) {
       console.error("Failed to save content type:", error);
@@ -214,7 +235,7 @@ const ContentTypeManager: React.FC<ContentTypeManagerProps> = ({
   };
 
   return (
-    <div className="container mx-auto p-6">
+    <div className="container mx-auto">
       {showEditor ? (
         <ContentTypeEditor
           contentType={editingContentType}
