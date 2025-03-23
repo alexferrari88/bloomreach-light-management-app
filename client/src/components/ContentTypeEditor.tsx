@@ -35,7 +35,6 @@ const ContentTypeEditor: React.FC<ContentTypeEditorProps> = ({
   contentType,
   onSave,
   onCancel,
-  mode,
 }) => {
   // State for the content type being edited
   const [formData, setFormData] = useState<ContentType>({
@@ -43,7 +42,7 @@ const ContentTypeEditor: React.FC<ContentTypeEditorProps> = ({
     displayName: "",
     description: "",
     properties: [],
-    resourceVersion: null,
+    resourceVersion: undefined,
   });
 
   // State for the current property being edited
@@ -67,7 +66,7 @@ const ContentTypeEditor: React.FC<ContentTypeEditorProps> = ({
         displayName: contentType.displayName || "",
         description: contentType.description || "",
         properties: contentType.properties || [],
-        resourceVersion: contentType.resourceVersion || null,
+        resourceVersion: contentType.resourceVersion || undefined,
       };
 
       setFormData(transformedData);

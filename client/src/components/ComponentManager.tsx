@@ -1,3 +1,4 @@
+// client/src/components/ComponentManager.tsx
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,17 +31,13 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import {
-  ApiRequest,
-  Component,
-  ComponentGroup,
-  ComponentManagerProps,
-} from "../types";
+import { useApi } from "../contexts/ApiContext";
+import { ApiRequest, Component, ComponentGroup } from "../types";
 import ComponentEditor from "./ComponentEditor";
 
-const ComponentManager: React.FC<ComponentManagerProps> = ({
-  makeApiRequest,
-}) => {
+const ComponentManager: React.FC = () => {
+  const { queueOperation, executeOperation } = useApi();
+  
   const [componentGroups, setComponentGroups] = useState<ComponentGroup[]>([]);
   const [components, setComponents] = useState<Component[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -58,8 +55,6 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({
     hidden: false,
     system: false,
   });
-
-  // Using Sonner toast directly
 
   // Fetch component groups when ACTIVE channel ID changes
   useEffect(() => {
@@ -89,7 +84,7 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({
         authToken: "",
       };
 
-      const result = await makeApiRequest(params);
+      const result = await executeOperation(params);
 
       if (result.success && result.data) {
         setComponentGroups(result.data);
@@ -119,7 +114,7 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({
         authToken: "",
       };
 
-      const result = await makeApiRequest(params);
+      const result = await executeOperation(params);
 
       if (result.success && result.data) {
         setComponents(result.data);
@@ -145,7 +140,7 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({
         authToken: "",
       };
 
-      const result = await makeApiRequest(params);
+      const result = await executeOperation(params);
 
       if (result.success && result.data) {
         // Include resource version for PUT operations
@@ -187,11 +182,20 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({
         authToken: "",
       };
 
-      const result = await makeApiRequest(params);
+      // Use queueOperation instead of makeApiRequest
+      const result = await queueOperation(
+        params,
+        "DELETE",
+        "Component",
+        componentName,
+        `Delete component ${componentName} from group ${currentGroup}`
+      );
 
       if (result.success) {
-        toast.success(`Component ${componentName} deleted successfully`);
-        fetchComponents();
+        toast.success(`Component ${result.queued ? 'queued for deletion' : 'deleted successfully'}`);
+        if (!result.queued) {
+          fetchComponents();
+        }
       }
     } catch (error) {
       console.error("Failed to delete component:", error);
@@ -216,6 +220,8 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({
         ? "updateComponent"
         : "createComponent";
       const resourceId = component.name || component.id.split("/")[1];
+      const action = operation === "createComponent" ? "CREATE" : "UPDATE";
+      const actionText = action === "CREATE" ? "Create" : "Update";
 
       const params: ApiRequest = {
         section: "components",
@@ -228,16 +234,26 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({
         authToken: "",
       };
 
-      const result = await makeApiRequest(params);
+      // Use queueOperation instead of makeApiRequest
+      const result = await queueOperation(
+        params,
+        action,
+        "Component",
+        resourceId,
+        `${actionText} component ${resourceId} in group ${currentGroup}`,
+        component.resourceVersion ? component : null
+      );
 
       if (result.success) {
         toast.success(
-          `Component ${
+          `Component ${result.queued ? 'queued to be' : ''} ${
             operation === "createComponent" ? "created" : "updated"
           } successfully`
         );
         setShowEditor(false);
-        fetchComponents();
+        if (!result.queued) {
+          fetchComponents();
+        }
       }
     } catch (error) {
       console.error("Failed to save component:", error);
@@ -269,14 +285,24 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({
         authToken: "",
       };
 
-      const result = await makeApiRequest(params);
+      // Use queueOperation instead of makeApiRequest
+      const result = await queueOperation(
+        params,
+        "CREATE",
+        "Component Group",
+        newGroup.name,
+        `Create component group ${newGroup.name}`
+      );
 
       if (result.success) {
-        toast.success(`Component group ${newGroup.name} created successfully`);
+        toast.success(`Component group ${result.queued ? 'queued for creation' : 'created successfully'}`);
         setShowGroupForm(false);
         setNewGroup({ name: "", hidden: false, system: false });
-        fetchComponentGroups();
-        setCurrentGroup(newGroup.name);
+        
+        if (!result.queued) {
+          fetchComponentGroups();
+          setCurrentGroup(newGroup.name);
+        }
       }
     } catch (error) {
       console.error("Failed to create component group:", error);
@@ -307,18 +333,27 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({
         authToken: "",
       };
 
-      const result = await makeApiRequest(params);
+      // Use queueOperation instead of makeApiRequest
+      const result = await queueOperation(
+        params,
+        "DELETE",
+        "Component Group",
+        groupName,
+        `Delete component group ${groupName}`
+      );
 
       if (result.success) {
-        toast.success(`Component group ${groupName} deleted successfully`);
+        toast.success(`Component group ${result.queued ? 'queued for deletion' : 'deleted successfully'}`);
 
         // If we deleted the current group, reset it
-        if (currentGroup === groupName) {
+        if (currentGroup === groupName && !result.queued) {
           setCurrentGroup("");
           setComponents([]);
         }
 
-        fetchComponentGroups();
+        if (!result.queued) {
+          fetchComponentGroups();
+        }
       }
     } catch (error) {
       console.error("Failed to delete component group:", error);
@@ -396,7 +431,7 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({
   };
 
   return (
-    <div className="container mx-auto p-6">
+    <div className="container mx-auto">
       {showEditor ? (
         <ComponentEditor
           component={editingComponent}

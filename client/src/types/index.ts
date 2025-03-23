@@ -21,6 +21,44 @@ export interface ApiResponse {
   details?: any;
 }
 
+export interface QueuedOperation {
+  id: string; // Unique ID for this operation
+  timestamp: string; // When it was queued
+  operation: ApiRequest; // The operation to perform
+  type: "CREATE" | "UPDATE" | "DELETE"; // Operation type
+  entityType: string; // Content Type, Component, etc.
+  entityName: string; // Name/ID of the entity
+  originalData?: any; // Original state (for updates/deletes)
+  description: string; // Human-readable description
+  dependencies?: string[]; // IDs of operations this depends on
+  status: "PENDING" | "EXECUTED" | "FAILED"; // Current status
+  error?: string; // Error message if failed
+}
+
+export interface QueueState {
+  operations: QueuedOperation[];
+  isQueueMode: boolean; // Whether queue mode is active
+  originalStates: Record<string, any>; // Original states of resources before editing
+}
+
+// API context interface
+export interface ApiContextType {
+  queueState: QueueState;
+  toggleQueueMode: () => void;
+  queueOperation: (
+    operation: ApiRequest,
+    type: "CREATE" | "UPDATE" | "DELETE",
+    entityType: string,
+    entityName: string,
+    description: string,
+    originalData?: any
+  ) => Promise<any>;
+  executeOperation: (operation: ApiRequest) => Promise<ApiResponse>;
+  executeQueue: () => Promise<void>;
+  clearQueue: () => void;
+  discardOperation: (id: string) => void;
+}
+
 export interface Auth {
   brxHost: string;
   authToken: string;
