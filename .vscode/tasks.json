@@ -4,7 +4,7 @@
     {
       "label": "Generate Project Structure",
       "type": "shell",
-      "command": "tree -I 'node_modules|.git' > project_structure.txt",
+      "command": "tree -I 'node_modules|.git|project_structure.txt' > project_structure.txt",
       "group": {
         "kind": "build",
         "isDefault": false
