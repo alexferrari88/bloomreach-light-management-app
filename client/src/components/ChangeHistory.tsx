@@ -8,7 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Download, FileBadge, Info, Trash2, X } from "lucide-react";
+import { Download, FileBadge, Git, Info, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import { Change, ChangeHistoryProps } from "../types";
 import ChangeDetail from "./ChangeDetail";
@@ -17,7 +17,8 @@ const ChangeHistory: React.FC<ChangeHistoryProps> = ({
   changes,
   onClear,
   onExport,
-  onDownloadModifiedFiles, // New prop for downloading modified files
+  onDownloadModifiedFiles,
+  onDownloadGitPatch, // New prop for downloading git patch
 }) => {
   const [selectedChange, setSelectedChange] = useState<Change | null>(null);
   const [downloadDialogOpen, setDownloadDialogOpen] = useState<boolean>(false);
@@ -65,21 +66,28 @@ const ChangeHistory: React.FC<ChangeHistoryProps> = ({
   const { modified: modifiedEntities, deleted: deletedEntities } =
     getUniqueEntities();
 
+  // Check if we have any entities to export
+  const hasChanges = modifiedEntities.length > 0 || deletedEntities.length > 0;
+
   if (changes.length === 0) {
     return (
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Change History</CardTitle>
           <div className="flex space-x-2">
-            <Button type="button" variant="outline" size="sm" disabled>
+            <Button variant="outline" size="sm" disabled>
               <Download className="mr-2 h-4 w-4" />
               Export
             </Button>
-            <Button type="button" variant="outline" size="sm" disabled>
+            <Button variant="outline" size="sm" disabled>
               <FileBadge className="mr-2 h-4 w-4" />
               Download Files
             </Button>
-            <Button type="button" variant="outline" size="sm" disabled>
+            <Button variant="outline" size="sm" disabled>
+              <Git className="mr-2 h-4 w-4" />
+              Git Patch
+            </Button>
+            <Button variant="outline" size="sm" disabled>
               <Trash2 className="mr-2 h-4 w-4" />
               Clear
             </Button>
@@ -109,16 +117,25 @@ const ChangeHistory: React.FC<ChangeHistoryProps> = ({
           </Button>
           <Button
             type="button"
-            variant="primary"
+            variant="outline"
             size="sm"
             onClick={() => setDownloadDialogOpen(true)}
             className="cursor-pointer"
-            disabled={
-              modifiedEntities.length === 0 && deletedEntities.length === 0
-            }
+            disabled={!hasChanges}
           >
             <FileBadge className="mr-2 h-4 w-4" />
             Download Files
+          </Button>
+          <Button
+            type="button"
+            variant="primary"
+            size="sm"
+            onClick={onDownloadGitPatch}
+            className="cursor-pointer"
+            disabled={!hasChanges}
+          >
+            <Git className="mr-2 h-4 w-4" />
+            Git Patch
           </Button>
           <Button
             type="button"
@@ -334,6 +351,16 @@ const ChangeHistory: React.FC<ChangeHistoryProps> = ({
                 No changes to download.
               </div>
             )}
+
+            <div className="mt-6 p-3 bg-blue-50 border border-blue-200 rounded-md text-blue-800 text-sm">
+              <strong>Pro Tip:</strong> You can also download a Git patch file
+              by clicking the "Git Patch" button. This creates a single file
+              that can be applied with{" "}
+              <code className="bg-blue-100 px-1 rounded">
+                git apply patch_file.patch
+              </code>
+              in your repository.
+            </div>
           </div>
 
           <div className="flex justify-end gap-2">
@@ -353,6 +380,17 @@ const ChangeHistory: React.FC<ChangeHistoryProps> = ({
             >
               <Download className="mr-2 h-4 w-4" />
               Download Files
+            </Button>
+            <Button
+              type="button"
+              variant="primary"
+              onClick={() => {
+                onDownloadGitPatch();
+                setDownloadDialogOpen(false);
+              }}
+            >
+              <Git className="mr-2 h-4 w-4" />
+              Download Git Patch
             </Button>
           </div>
         </DialogContent>

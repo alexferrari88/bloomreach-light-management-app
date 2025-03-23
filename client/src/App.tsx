@@ -105,6 +105,145 @@ function App() {
     }
   };
 
+  // Helper function to get the path for a file based on entity type
+  const getFilePath = (entityType: string, entityName: string): string => {
+    if (entityType.includes("Content Type")) {
+      return `content-types/${entityName}.json`;
+    } else {
+      return `components/${entityName}.json`;
+    }
+  };
+
+  // Generate a Git patch from changes
+  const downloadGitPatch = () => {
+    try {
+      // Create maps to track the latest state of every entity
+      const modifiedEntitiesMap = new Map<string, Change>();
+      const deletedEntitiesMap = new Map<string, Change>();
+
+      // Process all changes to find the final state of each entity
+      changes.forEach((change) => {
+        const key = `${change.entityType}:${change.entityName}`;
+
+        // Check if this is the most recent change for this entity
+        const alreadyTracked =
+          modifiedEntitiesMap.has(key) || deletedEntitiesMap.has(key);
+        const isMoreRecent =
+          alreadyTracked &&
+          (modifiedEntitiesMap.has(key)
+            ? new Date(change.timestamp) >
+              new Date(modifiedEntitiesMap.get(key)!.timestamp)
+            : new Date(change.timestamp) >
+              new Date(deletedEntitiesMap.get(key)!.timestamp));
+
+        if (!alreadyTracked || isMoreRecent) {
+          // If it's a deletion, add to deleted map and remove from modified map
+          if (change.action === "DELETE") {
+            deletedEntitiesMap.set(key, change);
+            modifiedEntitiesMap.delete(key);
+          }
+          // If it's a creation or update, add to modified map and remove from deleted map
+          else {
+            modifiedEntitiesMap.set(key, change);
+            deletedEntitiesMap.delete(key);
+          }
+        }
+      });
+
+      // Check if we have any changes to export
+      if (modifiedEntitiesMap.size === 0 && deletedEntitiesMap.size === 0) {
+        toast.error("No changes to download");
+        return;
+      }
+
+      // Generate the git patch content
+      let patchContent = "";
+      const timestamp = Math.floor(Date.now() / 1000); // Unix timestamp for mock indexes
+
+      // Add message header to the patch
+      patchContent += `From: Bloomreach Management App <noreply@bloomreach.com>\n`;
+      patchContent += `Date: ${new Date().toUTCString()}\n`;
+      patchContent += `Subject: [PATCH] Update Bloomreach configuration files\n\n`;
+      patchContent += `Update Bloomreach content types and components\n\n`;
+
+      // Process created and updated files
+      modifiedEntitiesMap.forEach((change) => {
+        const filePath = getFilePath(change.entityType, change.entityName);
+        const formattedContent = JSON.stringify(change.entityData, null, 2);
+
+        if (change.action === "CREATE") {
+          // Format for new file
+          patchContent += `diff --git a/${filePath} b/${filePath}\n`;
+          patchContent += `new file mode 100644\n`;
+          patchContent += `index 0000000..${timestamp.toString(16)}\n`;
+          patchContent += `--- /dev/null\n`;
+          patchContent += `+++ b/${filePath}\n`;
+          patchContent += `@@ -0,0 +1,${
+            formattedContent.split("\n").length
+          } @@\n`;
+
+          // Add the new file content with + prefix
+          formattedContent.split("\n").forEach((line) => {
+            patchContent += `+${line}\n`;
+          });
+        } else if (change.action === "UPDATE" && change.previousData) {
+          // Format for modified file
+          const previousContent = JSON.stringify(change.previousData, null, 2);
+          const prevLines = previousContent.split("\n");
+          const newLines = formattedContent.split("\n");
+
+          patchContent += `diff --git a/${filePath} b/${filePath}\n`;
+          patchContent += `index ${(timestamp - 100).toString(
+            16
+          )}..${timestamp.toString(16)} 100644\n`;
+          patchContent += `--- a/${filePath}\n`;
+          patchContent += `+++ b/${filePath}\n`;
+          patchContent += `@@ -1,${prevLines.length} +1,${newLines.length} @@\n`;
+
+          // Add the previous content with - prefix
+          prevLines.forEach((line) => {
+            patchContent += `-${line}\n`;
+          });
+
+          // Add the new content with + prefix
+          newLines.forEach((line) => {
+            patchContent += `+${line}\n`;
+          });
+        }
+      });
+
+      // Process deleted files
+      deletedEntitiesMap.forEach((change) => {
+        if (change.previousData) {
+          const filePath = getFilePath(change.entityType, change.entityName);
+          const previousContent = JSON.stringify(change.previousData, null, 2);
+          const prevLines = previousContent.split("\n");
+
+          patchContent += `diff --git a/${filePath} b/${filePath}\n`;
+          patchContent += `deleted file mode 100644\n`;
+          patchContent += `index ${(timestamp - 100).toString(16)}..0000000\n`;
+          patchContent += `--- a/${filePath}\n`;
+          patchContent += `+++ /dev/null\n`;
+          patchContent += `@@ -1,${prevLines.length} +0,0 @@\n`;
+
+          // Add the deleted content with - prefix
+          prevLines.forEach((line) => {
+            patchContent += `-${line}\n`;
+          });
+        }
+      });
+
+      // Create a blob and download it
+      const blob = new Blob([patchContent], { type: "text/plain" });
+      saveAs(blob, "bloomreach-changes.patch");
+
+      toast.success("Git patch created successfully");
+    } catch (error) {
+      console.error("Error generating git patch:", error);
+      toast.error("Failed to generate git patch");
+    }
+  };
+
   // Download modified files for git repository
   const downloadModifiedFiles = () => {
     try {
@@ -290,6 +429,8 @@ function App() {
     manifest += `2. For created and updated files, the files are included in this zip\n`;
     manifest += `3. For deleted files, you need to remove them from your repository\n`;
     manifest += `4. You can use the included \`apply-changes.sh\` script to automate these changes\n`;
+    manifest += `\n## Alternative Method\n\n`;
+    manifest += `You can also download a Git patch file and apply it with \`git apply patch_file.patch\`\n`;
 
     return manifest;
   };
@@ -515,6 +656,7 @@ function App() {
                     onClear={clearChangeHistory}
                     onExport={exportChangeHistory}
                     onDownloadModifiedFiles={downloadModifiedFiles}
+                    onDownloadGitPatch={downloadGitPatch}
                   />
                 </div>
               </div>
