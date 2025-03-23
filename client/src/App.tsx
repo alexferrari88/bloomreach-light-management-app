@@ -78,21 +78,6 @@ function App() {
     setChanges((prevChanges) => [change, ...prevChanges]);
   };
 
-  // Export change history as JSON
-  const exportChangeHistory = () => {
-    const dataStr =
-      "data:text/json;charset=utf-8," +
-      encodeURIComponent(JSON.stringify(changes, null, 2));
-    const downloadAnchorNode = document.createElement("a");
-    downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", "change-history.json");
-    document.body.appendChild(downloadAnchorNode);
-    downloadAnchorNode.click();
-    downloadAnchorNode.remove();
-
-    toast.success("Change history exported successfully");
-  };
-
   // Clear change history
   const clearChangeHistory = () => {
     if (window.confirm("Are you sure you want to clear the change history?")) {
@@ -838,7 +823,6 @@ function App() {
                   <ChangeHistory
                     changes={changes}
                     onClear={clearChangeHistory}
-                    onExport={exportChangeHistory}
                     onDownloadModifiedFiles={downloadModifiedFiles}
                     onDownloadGitPatch={downloadGitPatch}
                   />

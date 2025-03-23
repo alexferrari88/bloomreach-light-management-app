@@ -150,7 +150,6 @@ export interface ComponentManagerProps {
 export interface ChangeHistoryProps {
   changes: Change[];
   onClear: () => void;
-  onExport: () => void;
   onDownloadModifiedFiles: () => void;
   onDownloadGitPatch: () => void;
 }

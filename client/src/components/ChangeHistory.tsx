@@ -8,17 +8,24 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Download, FileBadge, GitGraph, Info, Trash2, X } from "lucide-react";
+import { FileBadge, GitGraph, Info, Trash2, X } from "lucide-react";
 import { useState } from "react";
-import { Change, ChangeHistoryProps } from "../types";
+import { Change } from "../types";
 import ChangeDetail from "./ChangeDetail";
 
-const ChangeHistory: React.FC<ChangeHistoryProps> = ({
+// Updated interface without the export function
+interface UpdatedChangeHistoryProps {
+  changes: Change[];
+  onClear: () => void;
+  onDownloadModifiedFiles: () => void;
+  onDownloadGitPatch: () => void;
+}
+
+const ChangeHistory: React.FC<UpdatedChangeHistoryProps> = ({
   changes,
   onClear,
-  onExport,
   onDownloadModifiedFiles,
-  onDownloadGitPatch, // New prop for downloading git patch
+  onDownloadGitPatch,
 }) => {
   const [selectedChange, setSelectedChange] = useState<Change | null>(null);
   const [downloadDialogOpen, setDownloadDialogOpen] = useState<boolean>(false);
@@ -76,10 +83,6 @@ const ChangeHistory: React.FC<ChangeHistoryProps> = ({
           <CardTitle className="text-sm font-medium">Change History</CardTitle>
           <div className="flex space-x-2">
             <Button variant="outline" size="sm" disabled>
-              <Download className="mr-2 h-4 w-4" />
-              Export
-            </Button>
-            <Button variant="outline" size="sm" disabled>
               <FileBadge className="mr-2 h-4 w-4" />
               Download Files
             </Button>
@@ -107,16 +110,6 @@ const ChangeHistory: React.FC<ChangeHistoryProps> = ({
         <div className="flex space-x-2">
           <Button
             type="button"
-            variant="secondary"
-            size="sm"
-            onClick={onExport}
-            className="cursor-pointer"
-          >
-            <Download className="mr-2 h-4 w-4" />
-            Export
-          </Button>
-          <Button
-            type="button"
             variant="outline"
             size="sm"
             onClick={() => setDownloadDialogOpen(true)}
@@ -128,7 +121,7 @@ const ChangeHistory: React.FC<ChangeHistoryProps> = ({
           </Button>
           <Button
             type="button"
-            variant="primary"
+            variant="outline"
             size="sm"
             onClick={onDownloadGitPatch}
             className="cursor-pointer"
@@ -368,6 +361,7 @@ const ChangeHistory: React.FC<ChangeHistoryProps> = ({
               type="button"
               variant="outline"
               onClick={() => setDownloadDialogOpen(false)}
+              className="cursor-pointer"
             >
               Cancel
             </Button>
@@ -377,8 +371,9 @@ const ChangeHistory: React.FC<ChangeHistoryProps> = ({
                 onDownloadModifiedFiles();
                 setDownloadDialogOpen(false);
               }}
+              className="cursor-pointer"
             >
-              <Download className="mr-2 h-4 w-4" />
+              <FileBadge className="mr-2 h-4 w-4" />
               Download Files
             </Button>
             <Button
@@ -387,6 +382,7 @@ const ChangeHistory: React.FC<ChangeHistoryProps> = ({
                 onDownloadGitPatch();
                 setDownloadDialogOpen(false);
               }}
+              className="cursor-pointer"
             >
               <GitGraph className="mr-2 h-4 w-4" />
               Download Git Patch
