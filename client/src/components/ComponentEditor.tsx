@@ -496,11 +496,18 @@ const ComponentEditor: React.FC<ComponentEditorProps> = ({
         </h2>
         <div className="flex space-x-3">
           <Button
+            className="cursor-pointer"
+            type="submit"
             onClick={() => handleSubmit({ preventDefault: () => {} } as any)}
           >
             <Save className="mr-2 h-4 w-4" /> Save
           </Button>
-          <Button variant="outline" onClick={onCancel}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            className="cursor-pointer"
+          >
             <X className="mr-2 h-4 w-4" /> Cancel
           </Button>
         </div>
@@ -712,18 +719,22 @@ const ComponentEditor: React.FC<ComponentEditorProps> = ({
                           <TableCell className="text-right">
                             <div className="flex justify-end space-x-1">
                               <Button
+                                type="button"
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => editParameter(index)}
                                 title="Edit"
+                                className="cursor-pointer"
                               >
                                 <Edit2 className="h-4 w-4" />
                               </Button>
                               <Button
+                                type="button"
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => deleteParameter(index)}
                                 title="Delete"
+                                className="cursor-pointer"
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
@@ -1133,8 +1144,10 @@ const ComponentEditor: React.FC<ComponentEditorProps> = ({
 
                 <div className="flex justify-end space-x-3">
                   <Button
+                    type="button"
                     onClick={addParameter}
                     disabled={!currentParameter.name}
+                    className="cursor-pointer"
                   >
                     {editingParameterIndex >= 0 ? (
                       "Update Parameter"
@@ -1146,7 +1159,12 @@ const ComponentEditor: React.FC<ComponentEditorProps> = ({
                   </Button>
 
                   {editingParameterIndex >= 0 && (
-                    <Button variant="outline" onClick={cancelParameterEdit}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={cancelParameterEdit}
+                      className="cursor-pointer"
+                    >
                       Cancel
                     </Button>
                   )}
@@ -1189,18 +1207,22 @@ const ComponentEditor: React.FC<ComponentEditorProps> = ({
                           <TableCell className="text-right">
                             <div className="flex justify-end space-x-1">
                               <Button
+                                type="button"
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => editFieldGroup(index)}
                                 title="Edit"
+                                className="cursor-pointer"
                               >
                                 <Edit2 className="h-4 w-4" />
                               </Button>
                               <Button
+                                type="button"
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => deleteFieldGroup(index)}
                                 title="Delete"
+                                className="cursor-pointer"
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
@@ -1284,7 +1306,9 @@ const ComponentEditor: React.FC<ComponentEditorProps> = ({
 
                 <div className="flex justify-end space-x-3">
                   <Button
+                    type="button"
                     onClick={addFieldGroup}
+                    className="cursor-pointer"
                     disabled={
                       !currentFieldGroup.name ||
                       formData.parameters.length === 0
@@ -1300,7 +1324,12 @@ const ComponentEditor: React.FC<ComponentEditorProps> = ({
                   </Button>
 
                   {editingFieldGroupIndex >= 0 && (
-                    <Button variant="outline" onClick={cancelFieldGroupEdit}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={cancelFieldGroupEdit}
+                      className="cursor-pointer"
+                    >
                       Cancel
                     </Button>
                   )}

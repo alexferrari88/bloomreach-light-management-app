@@ -252,6 +252,7 @@ const ContentTypeManager: React.FC<ContentTypeManagerProps> = ({
 
             <div className="flex space-x-3">
               <Button
+                type="button"
                 onClick={createContentType}
                 disabled={loading}
                 className="cursor-pointer"
@@ -259,6 +260,7 @@ const ContentTypeManager: React.FC<ContentTypeManagerProps> = ({
                 <PlusCircle className="mr-2 h-4 w-4" /> New Content Type
               </Button>
               <Button
+                type="button"
                 variant="outline"
                 onClick={fetchContentTypes}
                 disabled={loading}
@@ -277,7 +279,7 @@ const ContentTypeManager: React.FC<ContentTypeManagerProps> = ({
             ) : contentTypes.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 space-y-4">
                 <p className="text-muted-foreground">No content types found.</p>
-                <Button onClick={createContentType}>
+                <Button type="button" onClick={createContentType}>
                   Create your first content type
                 </Button>
               </div>
@@ -316,6 +318,7 @@ const ContentTypeManager: React.FC<ContentTypeManagerProps> = ({
                         >
                           <div className="flex justify-end space-x-2">
                             <Button
+                              type="button"
                               variant="ghost"
                               size="icon"
                               onClick={() =>
@@ -328,6 +331,7 @@ const ContentTypeManager: React.FC<ContentTypeManagerProps> = ({
                               <Edit className="h-4 w-4" />
                             </Button>
                             <Button
+                              type="button"
                               variant="ghost"
                               size="icon"
                               onClick={() =>
@@ -340,6 +344,7 @@ const ContentTypeManager: React.FC<ContentTypeManagerProps> = ({
                               <Trash2 className="h-4 w-4" />
                             </Button>
                             <Button
+                              type="button"
                               variant="ghost"
                               size="icon"
                               onClick={() => exportContentType(contentType)}
@@ -369,6 +374,7 @@ const ContentTypeManager: React.FC<ContentTypeManagerProps> = ({
                   </h3>
                   <div className="flex space-x-2">
                     <Button
+                      type="button"
                       variant="secondary"
                       size="sm"
                       onClick={copyToClipboard}
@@ -376,6 +382,7 @@ const ContentTypeManager: React.FC<ContentTypeManagerProps> = ({
                       <Copy className="mr-2 h-4 w-4" /> Copy
                     </Button>
                     <Button
+                      type="button"
                       variant="secondary"
                       size="sm"
                       onClick={downloadJson}

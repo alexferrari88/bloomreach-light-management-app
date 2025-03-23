@@ -618,6 +618,7 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({
                             </div>
                             {!group.system && (
                               <Button
+                                type="button"
                                 variant="ghost"
                                 size="icon"
                                 onClick={(e) => {
@@ -656,7 +657,7 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({
                       <p className="text-muted-foreground mb-4">
                         No components found in group "{currentGroup}".
                       </p>
-                      <Button onClick={createComponent}>
+                      <Button type="button" onClick={createComponent}>
                         Create your first component
                       </Button>
                     </div>
@@ -713,6 +714,7 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({
                                   >
                                     <div className="flex justify-end space-x-2">
                                       <Button
+                                        type="button"
                                         variant="ghost"
                                         size="icon"
                                         onClick={() =>
@@ -725,6 +727,7 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({
                                       </Button>
                                       {!component.system && (
                                         <Button
+                                          type="button"
                                           variant="ghost"
                                           size="icon"
                                           onClick={() =>
@@ -737,6 +740,7 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({
                                         </Button>
                                       )}
                                       <Button
+                                        type="button"
                                         variant="ghost"
                                         size="icon"
                                         onClick={() =>
@@ -773,13 +777,19 @@ const ComponentManager: React.FC<ComponentManagerProps> = ({
                 </DialogHeader>
                 <div className="flex justify-end space-x-2 mb-4">
                   <Button
+                    type="button"
                     variant="secondary"
                     size="sm"
                     onClick={copyToClipboard}
                   >
                     <Copy className="mr-2 h-4 w-4" /> Copy
                   </Button>
-                  <Button variant="secondary" size="sm" onClick={downloadJson}>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={downloadJson}
+                  >
                     <Download className="mr-2 h-4 w-4" /> Download
                   </Button>
                 </div>

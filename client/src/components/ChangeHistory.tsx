@@ -71,15 +71,15 @@ const ChangeHistory: React.FC<ChangeHistoryProps> = ({
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Change History</CardTitle>
           <div className="flex space-x-2">
-            <Button variant="outline" size="sm" disabled>
+            <Button type="button" variant="outline" size="sm" disabled>
               <Download className="mr-2 h-4 w-4" />
               Export
             </Button>
-            <Button variant="outline" size="sm" disabled>
+            <Button type="button" variant="outline" size="sm" disabled>
               <FileBadge className="mr-2 h-4 w-4" />
               Download Files
             </Button>
-            <Button variant="outline" size="sm" disabled>
+            <Button type="button" variant="outline" size="sm" disabled>
               <Trash2 className="mr-2 h-4 w-4" />
               Clear
             </Button>
@@ -98,6 +98,7 @@ const ChangeHistory: React.FC<ChangeHistoryProps> = ({
         <CardTitle className="text-sm font-medium">Change History</CardTitle>
         <div className="flex space-x-2">
           <Button
+            type="button"
             variant="secondary"
             size="sm"
             onClick={onExport}
@@ -107,6 +108,7 @@ const ChangeHistory: React.FC<ChangeHistoryProps> = ({
             Export
           </Button>
           <Button
+            type="button"
             variant="primary"
             size="sm"
             onClick={() => setDownloadDialogOpen(true)}
@@ -119,6 +121,7 @@ const ChangeHistory: React.FC<ChangeHistoryProps> = ({
             Download Files
           </Button>
           <Button
+            type="button"
             variant="outline"
             size="sm"
             onClick={onClear}
@@ -335,12 +338,14 @@ const ChangeHistory: React.FC<ChangeHistoryProps> = ({
 
           <div className="flex justify-end gap-2">
             <Button
+              type="button"
               variant="outline"
               onClick={() => setDownloadDialogOpen(false)}
             >
               Cancel
             </Button>
             <Button
+              type="button"
               onClick={() => {
                 onDownloadModifiedFiles();
                 setDownloadDialogOpen(false);
