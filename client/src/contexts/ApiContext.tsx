@@ -264,7 +264,7 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({
       return;
     }
 
-    toast.info(`Executing ${operations.length} queued operations...`);
+    toast.info(`Preparing ${operations.length} queued operations...`);
 
     // Mark all operations as in progress
     setQueueState((prev) => ({
@@ -275,23 +275,168 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({
       })),
     }));
 
-    // Execute operations in sequence
+    // Step 1: Group operations by target entity
+    const operationGroups = new Map<string, QueuedOperation[]>();
+
+    operations.forEach((op) => {
+      // Create a unique key for each entity
+      const entityKey = `${op.operation.section}:${op.entityType}:${op.entityName}`;
+
+      if (!operationGroups.has(entityKey)) {
+        operationGroups.set(entityKey, []);
+      }
+
+      operationGroups.get(entityKey)?.push(op);
+    });
+
+    // Step 2: For each group, consolidate operations
+    const consolidatedOperations: QueuedOperation[] = [];
+
+    for (const [entityKey, ops] of operationGroups.entries()) {
+      // If there's only one operation for this entity, no need to consolidate
+      if (ops.length === 1) {
+        consolidatedOperations.push(ops[0]);
+        continue;
+      }
+
+      // Sort operations by timestamp (oldest first)
+      const sortedOps = [...ops].sort(
+        (a, b) =>
+          new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+      );
+
+      // Check if there's a DELETE operation
+      const hasDelete = sortedOps.some((op) => op.type === "DELETE");
+
+      if (hasDelete) {
+        // If we have a DELETE, we only need the last DELETE operation
+        const lastDelete = [...sortedOps]
+          .reverse()
+          .find((op) => op.type === "DELETE");
+        if (lastDelete) {
+          consolidatedOperations.push(lastDelete);
+        }
+        continue;
+      }
+
+      // Check if there's a CREATE operation
+      const hasCreate = sortedOps.some((op) => op.type === "CREATE");
+
+      if (hasCreate) {
+        // If we have a CREATE followed by UPDATEs, we can consolidate them all into a single CREATE
+        // or if we only have CREATEs, use the latest CREATE
+
+        // Get the first CREATE operation
+        const firstCreate = sortedOps.find((op) => op.type === "CREATE");
+
+        if (!firstCreate) continue; // Should never happen
+
+        // Start with the base CREATE operation
+        const finalOp = { ...firstCreate };
+        let finalData = { ...firstCreate.operation.resourceData };
+
+        // Apply all UPDATE operations to the data
+        for (const op of sortedOps) {
+          if (op.type === "UPDATE" && op.operation.resourceData) {
+            // Merge the resource data
+            finalData = { ...finalData, ...op.operation.resourceData };
+          } else if (op.type === "CREATE" && op.operation.resourceData) {
+            // If there are multiple CREATEs, use the latest one's data
+            finalData = { ...op.operation.resourceData };
+          }
+        }
+
+        // Create the consolidated operation
+        finalOp.operation = {
+          ...finalOp.operation,
+          resourceData: finalData,
+        };
+
+        finalOp.description = `Combined operation: ${firstCreate.description}`;
+
+        consolidatedOperations.push(finalOp);
+        continue;
+      }
+
+      // If we only have UPDATE operations
+      if (sortedOps.every((op) => op.type === "UPDATE")) {
+        // Get the first UPDATE operation as our base
+        const firstUpdate = sortedOps[0];
+
+        if (!firstUpdate) continue; // Should never happen
+
+        // Start with the base UPDATE operation
+        const finalOp = { ...firstUpdate };
+
+        // If we have the original data (from before any updates), use that as our starting point
+        let finalData = finalOp.originalData
+          ? { ...finalOp.originalData }
+          : finalOp.operation.resourceData
+          ? { ...finalOp.operation.resourceData }
+          : {};
+
+        // Apply all UPDATE operations sequentially
+        for (const op of sortedOps) {
+          if (op.operation.resourceData) {
+            // For each update, merge its changes into our final data
+            finalData = { ...finalData, ...op.operation.resourceData };
+          }
+        }
+
+        // Create the consolidated operation with the final merged data
+        finalOp.operation = {
+          ...finalOp.operation,
+          resourceData: finalData,
+        };
+
+        finalOp.description = `Combined ${sortedOps.length} updates to ${firstUpdate.entityType}: ${firstUpdate.entityName}`;
+
+        consolidatedOperations.push(finalOp);
+      }
+    }
+
+    // Log the consolidation results
+    console.log(
+      `Consolidated ${operations.length} operations into ${consolidatedOperations.length} operations`
+    );
+
+    // Execute the consolidated operations
     let hadErrors = false;
     const updatedOperations = [...operations];
 
-    for (let i = 0; i < updatedOperations.length; i++) {
-      const op = updatedOperations[i];
-      if (op.status === "EXECUTED") continue; // Skip already executed operations
+    toast.info(
+      `Executing ${consolidatedOperations.length} consolidated operations...`
+    );
 
+    // Track which operations have been handled by our consolidated operations
+    const handledOperationIds = new Set<string>();
+
+    // Execute each consolidated operation
+    for (const consolidatedOp of consolidatedOperations) {
       try {
-        // Execute the operation
-        await executeOperation(op.operation);
+        // Find all original operations that are part of this consolidated operation
+        const relatedOps = operations.filter(
+          (op) =>
+            op.operation.section === consolidatedOp.operation.section &&
+            op.entityType === consolidatedOp.entityType &&
+            op.entityName === consolidatedOp.entityName
+        );
 
-        // Update the operation status
-        updatedOperations[i] = {
-          ...op,
-          status: "EXECUTED",
-        };
+        // Add their IDs to the handled set
+        relatedOps.forEach((op) => handledOperationIds.add(op.id));
+
+        // Execute the consolidated operation
+        await executeOperation(consolidatedOp.operation);
+
+        // Mark all related operations as executed
+        for (let i = 0; i < updatedOperations.length; i++) {
+          if (relatedOps.some((op) => op.id === updatedOperations[i].id)) {
+            updatedOperations[i] = {
+              ...updatedOperations[i],
+              status: "EXECUTED",
+            };
+          }
+        }
 
         // Update the queue state
         setQueueState((prev) => ({
@@ -301,12 +446,24 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({
       } catch (error: any) {
         hadErrors = true;
 
-        // Mark operation as failed
-        updatedOperations[i] = {
-          ...op,
-          status: "FAILED",
-          error: error.message || "Unknown error",
-        };
+        // Mark all related operations as failed
+        const relatedOps = operations.filter(
+          (op) =>
+            op.operation.section === consolidatedOp.operation.section &&
+            op.entityType === consolidatedOp.entityType &&
+            op.entityName === consolidatedOp.entityName &&
+            !handledOperationIds.has(op.id)
+        );
+
+        for (let i = 0; i < updatedOperations.length; i++) {
+          if (relatedOps.some((op) => op.id === updatedOperations[i].id)) {
+            updatedOperations[i] = {
+              ...updatedOperations[i],
+              status: "FAILED",
+              error: error.message || "Unknown error",
+            };
+          }
+        }
 
         // Update the queue state
         setQueueState((prev) => ({
@@ -315,10 +472,13 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({
         }));
 
         // Show error
-        toast.error(`Failed to execute operation: ${op.description}`, {
-          description: error.message || "Unknown error",
-          duration: 5000,
-        });
+        toast.error(
+          `Failed to execute operation: ${consolidatedOp.description}`,
+          {
+            description: error.message || "Unknown error",
+            duration: 5000,
+          }
+        );
       }
     }
 
