@@ -114,6 +114,204 @@ function App() {
     }
   };
 
+  // Create a line-based diff algorithm that shows only changed lines with context
+  function createUnifiedDiff(oldStr: string, newStr: string, context: number = 3): string {
+    // Split the strings into lines
+    const oldLines = oldStr.split('\n');
+    const newLines = newStr.split('\n');
+    
+    // Find matching lines
+    const hunks = [];
+    
+    // Simple LCS (Longest Common Subsequence) implementation
+    function findLCS() {
+      const matrix = Array(oldLines.length + 1).fill().map(() => 
+        Array(newLines.length + 1).fill(0)
+      );
+      
+      // Fill the matrix
+      for (let i = 1; i <= oldLines.length; i++) {
+        for (let j = 1; j <= newLines.length; j++) {
+          if (oldLines[i-1] === newLines[j-1]) {
+            matrix[i][j] = matrix[i-1][j-1] + 1;
+          } else {
+            matrix[i][j] = Math.max(matrix[i-1][j], matrix[i][j-1]);
+          }
+        }
+      }
+      
+      // Backtrack to find the sequence
+      let i = oldLines.length;
+      let j = newLines.length;
+      const lcs = [];
+      
+      while (i > 0 && j > 0) {
+        if (oldLines[i-1] === newLines[j-1]) {
+          lcs.unshift({oldIndex: i-1, newIndex: j-1, line: oldLines[i-1]});
+          i--;
+          j--;
+        } else if (matrix[i-1][j] > matrix[i][j-1]) {
+          i--;
+        } else {
+          j--;
+        }
+      }
+      
+      return lcs;
+    }
+    
+    // Find the longest common subsequence
+    const lcs = findLCS();
+    
+    // Use LCS to identify changes
+    let oldIndex = 0;
+    let newIndex = 0;
+    
+    // Build hunks of changes
+    let currentHunk = null;
+    
+    for (const match of lcs) {
+      // Process deletions
+      while (oldIndex < match.oldIndex) {
+        if (!currentHunk) {
+          currentHunk = {
+            oldStart: Math.max(0, oldIndex - context),
+            oldCount: 0,
+            newStart: Math.max(0, newIndex - context),
+            newCount: 0,
+            lines: []
+          };
+          
+          // Add context lines before
+          for (let i = currentHunk.oldStart; i < oldIndex; i++) {
+            currentHunk.lines.push(' ' + oldLines[i]);
+            currentHunk.oldCount++;
+            currentHunk.newCount++;
+          }
+        }
+        
+        currentHunk.lines.push('-' + oldLines[oldIndex]);
+        currentHunk.oldCount++;
+        oldIndex++;
+      }
+      
+      // Process additions
+      while (newIndex < match.newIndex) {
+        if (!currentHunk) {
+          currentHunk = {
+            oldStart: Math.max(0, oldIndex - context),
+            oldCount: 0,
+            newStart: Math.max(0, newIndex - context),
+            newCount: 0,
+            lines: []
+          };
+          
+          // Add context lines before
+          for (let i = currentHunk.oldStart; i < oldIndex; i++) {
+            currentHunk.lines.push(' ' + oldLines[i]);
+            currentHunk.oldCount++;
+            currentHunk.newCount++;
+          }
+        }
+        
+        currentHunk.lines.push('+' + newLines[newIndex]);
+        currentHunk.newCount++;
+        newIndex++;
+      }
+      
+      // Process matching line
+      if (currentHunk) {
+        currentHunk.lines.push(' ' + oldLines[oldIndex]);
+        currentHunk.oldCount++;
+        currentHunk.newCount++;
+      }
+      
+      oldIndex++;
+      newIndex++;
+      
+      // Finish hunk if we've reached the end of a change block
+      if (currentHunk && 
+          oldIndex < oldLines.length && 
+          newIndex < newLines.length && 
+          oldLines[oldIndex] === newLines[newIndex]) {
+        
+        // Add context lines after
+        const contextEnd = Math.min(oldIndex + context, oldLines.length);
+        for (let i = oldIndex; i < contextEnd; i++) {
+          currentHunk.lines.push(' ' + oldLines[i]);
+          currentHunk.oldCount++;
+          currentHunk.newCount++;
+        }
+        
+        hunks.push(currentHunk);
+        currentHunk = null;
+      }
+    }
+    
+    // Process any remaining deletions
+    while (oldIndex < oldLines.length) {
+      if (!currentHunk) {
+        currentHunk = {
+          oldStart: Math.max(0, oldIndex - context),
+          oldCount: 0,
+          newStart: Math.max(0, newIndex - context),
+          newCount: 0,
+          lines: []
+        };
+        
+        // Add context lines before
+        for (let i = currentHunk.oldStart; i < oldIndex; i++) {
+          currentHunk.lines.push(' ' + oldLines[i]);
+          currentHunk.oldCount++;
+          currentHunk.newCount++;
+        }
+      }
+      
+      currentHunk.lines.push('-' + oldLines[oldIndex]);
+      currentHunk.oldCount++;
+      oldIndex++;
+    }
+    
+    // Process any remaining additions
+    while (newIndex < newLines.length) {
+      if (!currentHunk) {
+        currentHunk = {
+          oldStart: Math.max(0, oldIndex - context),
+          oldCount: 0,
+          newStart: Math.max(0, newIndex - context),
+          newCount: 0,
+          lines: []
+        };
+        
+        // Add context lines before
+        for (let i = currentHunk.oldStart; i < oldIndex; i++) {
+          currentHunk.lines.push(' ' + oldLines[i]);
+          currentHunk.oldCount++;
+          currentHunk.newCount++;
+        }
+      }
+      
+      currentHunk.lines.push('+' + newLines[newIndex]);
+      currentHunk.newCount++;
+      newIndex++;
+    }
+    
+    // Add the last hunk if it exists
+    if (currentHunk) {
+      hunks.push(currentHunk);
+    }
+    
+    // Format the unified diff
+    let diffOutput = '';
+    
+    hunks.forEach(hunk => {
+      diffOutput += `@@ -${hunk.oldStart + 1},${hunk.oldCount} +${hunk.newStart + 1},${hunk.newCount} @@\n`;
+      diffOutput += hunk.lines.join('\n') + '\n';
+    });
+    
+    return diffOutput;
+  }
+
   // Generate a Git patch from changes
   const downloadGitPatch = () => {
     try {
@@ -170,7 +368,7 @@ function App() {
       modifiedEntitiesMap.forEach((change) => {
         const filePath = getFilePath(change.entityType, change.entityName);
         const formattedContent = JSON.stringify(change.entityData, null, 2);
-
+        
         if (change.action === "CREATE") {
           // Format for new file
           patchContent += `diff --git a/${filePath} b/${filePath}\n`;
@@ -178,56 +376,42 @@ function App() {
           patchContent += `index 0000000..${timestamp.toString(16)}\n`;
           patchContent += `--- /dev/null\n`;
           patchContent += `+++ b/${filePath}\n`;
-          patchContent += `@@ -0,0 +1,${
-            formattedContent.split("\n").length
-          } @@\n`;
-
+          patchContent += `@@ -0,0 +1,${formattedContent.split('\n').length} @@\n`;
+          
           // Add the new file content with + prefix
-          formattedContent.split("\n").forEach((line) => {
+          formattedContent.split('\n').forEach(line => {
             patchContent += `+${line}\n`;
           });
         } else if (change.action === "UPDATE" && change.previousData) {
-          // Format for modified file
+          // Format for modified file using our improved diff algorithm
           const previousContent = JSON.stringify(change.previousData, null, 2);
-          const prevLines = previousContent.split("\n");
-          const newLines = formattedContent.split("\n");
-
+          
           patchContent += `diff --git a/${filePath} b/${filePath}\n`;
-          patchContent += `index ${(timestamp - 100).toString(
-            16
-          )}..${timestamp.toString(16)} 100644\n`;
+          patchContent += `index ${(timestamp-100).toString(16)}..${timestamp.toString(16)} 100644\n`;
           patchContent += `--- a/${filePath}\n`;
           patchContent += `+++ b/${filePath}\n`;
-          patchContent += `@@ -1,${prevLines.length} +1,${newLines.length} @@\n`;
-
-          // Add the previous content with - prefix
-          prevLines.forEach((line) => {
-            patchContent += `-${line}\n`;
-          });
-
-          // Add the new content with + prefix
-          newLines.forEach((line) => {
-            patchContent += `+${line}\n`;
-          });
+          
+          // Generate a proper line-based diff with context
+          patchContent += createUnifiedDiff(previousContent, formattedContent, 3);
         }
       });
-
+      
       // Process deleted files
       deletedEntitiesMap.forEach((change) => {
         if (change.previousData) {
           const filePath = getFilePath(change.entityType, change.entityName);
           const previousContent = JSON.stringify(change.previousData, null, 2);
-          const prevLines = previousContent.split("\n");
-
+          const prevLines = previousContent.split('\n');
+          
           patchContent += `diff --git a/${filePath} b/${filePath}\n`;
           patchContent += `deleted file mode 100644\n`;
-          patchContent += `index ${(timestamp - 100).toString(16)}..0000000\n`;
+          patchContent += `index ${(timestamp-100).toString(16)}..0000000\n`;
           patchContent += `--- a/${filePath}\n`;
           patchContent += `+++ /dev/null\n`;
           patchContent += `@@ -1,${prevLines.length} +0,0 @@\n`;
-
+          
           // Add the deleted content with - prefix
-          prevLines.forEach((line) => {
+          prevLines.forEach(line => {
             patchContent += `-${line}\n`;
           });
         }
@@ -236,7 +420,7 @@ function App() {
       // Create a blob and download it
       const blob = new Blob([patchContent], { type: "text/plain" });
       saveAs(blob, "bloomreach-changes.patch");
-
+      
       toast.success("Git patch created successfully");
     } catch (error) {
       console.error("Error generating git patch:", error);
