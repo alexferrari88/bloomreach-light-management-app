@@ -8,7 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Download, FileBadge, Git, Info, Trash2, X } from "lucide-react";
+import { Download, FileBadge, GitGraph, Info, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import { Change, ChangeHistoryProps } from "../types";
 import ChangeDetail from "./ChangeDetail";
@@ -84,7 +84,7 @@ const ChangeHistory: React.FC<ChangeHistoryProps> = ({
               Download Files
             </Button>
             <Button variant="outline" size="sm" disabled>
-              <Git className="mr-2 h-4 w-4" />
+              <GitGraph className="mr-2 h-4 w-4" />
               Git Patch
             </Button>
             <Button variant="outline" size="sm" disabled>
@@ -134,7 +134,7 @@ const ChangeHistory: React.FC<ChangeHistoryProps> = ({
             className="cursor-pointer"
             disabled={!hasChanges}
           >
-            <Git className="mr-2 h-4 w-4" />
+            <GitGraph className="mr-2 h-4 w-4" />
             Git Patch
           </Button>
           <Button
@@ -383,13 +383,12 @@ const ChangeHistory: React.FC<ChangeHistoryProps> = ({
             </Button>
             <Button
               type="button"
-              variant="primary"
               onClick={() => {
                 onDownloadGitPatch();
                 setDownloadDialogOpen(false);
               }}
             >
-              <Git className="mr-2 h-4 w-4" />
+              <GitGraph className="mr-2 h-4 w-4" />
               Download Git Patch
             </Button>
           </div>
