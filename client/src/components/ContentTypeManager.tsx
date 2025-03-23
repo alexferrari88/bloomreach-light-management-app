@@ -27,7 +27,7 @@ import ContentTypeEditor from "./ContentTypeEditor";
 
 const ContentTypeManager: React.FC = () => {
   const { queueOperation, executeOperation } = useApi();
-  
+
   const [contentTypes, setContentTypes] = useState<ContentType[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [contentTypeMode, setContentTypeMode] = useState<
@@ -59,7 +59,18 @@ const ContentTypeManager: React.FC = () => {
       const result = await executeOperation(params);
 
       if (result.success && result.data) {
-        setContentTypes(result.data);
+        // Map the API response structure to our expected format
+        // The API returns 'fields' but our UI works with 'properties'
+        const mappedContentTypes = result.data.map((ct: any) => {
+          // Always normalize to have properties for UI consistency
+          return {
+            ...ct,
+            properties: ct.fields || ct.properties || [],
+          };
+        });
+
+        console.log("Mapped content types:", mappedContentTypes);
+        setContentTypes(mappedContentTypes);
       }
     } catch (error) {
       console.error("Failed to fetch content types:", error);
@@ -122,15 +133,19 @@ const ContentTypeManager: React.FC = () => {
 
       // Use queue operation instead of makeApiRequest
       const result = await queueOperation(
-        params, 
-        "DELETE", 
-        "Content Type", 
-        id, 
+        params,
+        "DELETE",
+        "Content Type",
+        id,
         `Delete content type ${id}`
       );
 
       if (result.success) {
-        toast.success(`Content type ${id} ${result.queued ? 'queued for deletion' : 'deleted successfully'}`);
+        toast.success(
+          `Content type ${id} ${
+            result.queued ? "queued for deletion" : "deleted successfully"
+          }`
+        );
         if (!result.queued) {
           fetchContentTypes();
         }
@@ -157,34 +172,49 @@ const ContentTypeManager: React.FC = () => {
       const operation = contentType.resourceVersion ? "update" : "create";
       const resourceId = contentType.id || contentType.name;
       const action = operation === "create" ? "CREATE" : "UPDATE";
-      const actionDescription = `${action === "CREATE" ? "Create" : "Update"} content type ${resourceId}`;
+      const actionDescription = `${
+        action === "CREATE" ? "Create" : "Update"
+      } content type ${resourceId}`;
+
+      // Check if we need to map properties to fields for the API
+      // This is determined by examining what structure the API expects
+      const contentTypeData = { ...contentType };
+
+      // If the original content types from the API used 'fields' instead of 'properties',
+      // we need to transform it back to match the API's expectations
+      if (contentTypes.length > 0 && contentTypes[0].fields) {
+        contentTypeData.fields = contentTypeData.properties;
+        delete contentTypeData.properties;
+      }
 
       const params: ApiRequest = {
         section: "contentTypes",
         operation,
         contentTypeMode,
         resourceId,
-        resourceData: contentType,
+        resourceData: contentTypeData,
         brxHost: "",
         authToken: "",
       };
 
       // Use queue operation instead of makeApiRequest
       const result = await queueOperation(
-        params, 
-        action, 
-        "Content Type", 
-        resourceId, 
+        params,
+        action,
+        "Content Type",
+        resourceId,
         actionDescription,
         contentType.resourceVersion ? contentType : null
       );
 
       if (result.success) {
         toast.success(
-          `Content type ${resourceId} ${result.queued ? 'queued for' : ''} ${operation === "create" ? "created" : "updated"} successfully`
+          `Content type ${resourceId} ${result.queued ? "queued for" : ""} ${
+            operation === "create" ? "created" : "updated"
+          } successfully`
         );
         setShowEditor(false);
-        
+
         if (!result.queued) {
           fetchContentTypes();
         }

@@ -70,7 +70,8 @@ export interface ContentType {
   name: string;
   displayName?: string;
   description?: string;
-  properties: Property[];
+  properties?: Property[]; // Internal representation in UI
+  fields?: Property[]; // Representation expected by API
   resourceVersion?: string;
 }
 
