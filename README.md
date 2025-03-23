@@ -1,25 +1,34 @@
-# Bloomreach (Light) Management App
+# Bloomreach Management App
 
-A modern web application for managing Bloomreach CMS content types and components through a visual interface, with comprehensive change tracking and Git integration.
-
-![Bloomreach Management App](/path/to/app-screenshot.png)
+A modern web application for managing Bloomreach CMS content types and components through a visual interface, with comprehensive change tracking, queued operations, and Git integration.
 
 ## Features
 
 ### Content Management Features
 
-- **Authentication**: Connect to your Bloomreach instance with your host URL and authentication token
+- **Authentication**: Connect to any Bloomreach instance with host URL and authentication token
 - **Content Type Management**:
-  - Core and Development modes
+  - Core and Development mode support
   - Create, read, update, and delete content types
   - Visual editor for defining content type properties
-  - Property type selection with options for String, Text, HTML, Boolean, Number, Date, etc.
-  - Property configuration including required and multiple value settings
+  - Property type configuration (String, Text, HTML, Boolean, Number, Date, etc.)
+  - Required and multiple value settings
 - **Component Management**:
   - Manage component groups
   - Create, read, update, and delete components
   - Visual editor for component parameters and field groups
-  - Advanced parameter configuration options (content paths, dropdowns, image sets)
+  - Advanced parameter configuration including:
+    - Content paths with picker configurations
+    - Dropdown options with value lists
+    - Image set path configurations
+
+### Operation Queue System
+
+- **Queue Mode**: Toggle between immediate execution and queued operations
+- **Batch Operations**: Group multiple changes for review before execution
+- **Operation Review**: Inspect queued operations before executing them
+- **Smart Consolidation**: Automatically combines multiple operations on the same entity to avoid version conflicts
+- **Error Handling**: Visual feedback for successful and failed operations
 
 ### Change Tracking & Git Integration
 
@@ -27,15 +36,18 @@ A modern web application for managing Bloomreach CMS content types and component
   - Real-time tracking of all create, update, and delete operations
   - Detailed view of each change with before/after comparison
   - Complete session history with timestamps
-- **Version Control Integration**:
+- **Git Integration**:
   - Download modified and deleted files for Git repositories
+  - Generate Git patch files for easier application
   - Organized file structure (content-types and components folders)
   - Comprehensive change manifest with complete change log
-  - Automated Git change application script
-- **Export Options**:
-  - Export individual content types and components as JSON
+
+### Export Options
+
+- **Multiple Export Formats**:
+  - Download individual content types and components as JSON
   - Download complete set of changes as ZIP
-  - Copy any configuration to clipboard
+  - Generate Git patches for version control systems
   - Export complete change history
 
 ### Modern UI Features
@@ -55,18 +67,19 @@ A modern web application for managing Bloomreach CMS content types and component
 
 ### Prerequisites
 
-- Node.js 14+ and npm
+- Node.js 18+ and npm
+- Git (optional, for version control)
 
 ### Setup
 
-1. Clone the repository
+1. Clone the repository:
 
 ```bash
-git clone https://github.com/alexferrari88/bloomreach-light-management-app.git
+git clone https://github.com/yourusername/bloomreach-management-app.git
 cd bloomreach-management-app
 ```
 
-2. Install dependencies for both server and client
+2. Install dependencies for both server and client:
 
 ```bash
 npm install
@@ -75,13 +88,13 @@ npm install
 cd ..
 ```
 
-3. Start the development server
+3. Start the development server:
 
 ```bash
 npm run dev
 ```
 
-This will start both the backend Express server and the frontend React application.
+This will start both the backend Express server (port 3001) and the frontend React application (port 3000).
 
 ## Usage
 
@@ -94,14 +107,12 @@ This will start both the backend Express server and the frontend React applicati
 ### Working with Content Types
 
 1. Choose between Core and Development mode
-2. Browse the list of existing content types
-3. Create a new content type with the "New Content Type" button
-4. Define properties for your content type:
+2. Browse existing content types or create new ones
+3. Define properties for your content types:
    - Add String, Text, HTML, Boolean, Number, Date fields
-   - Configure if properties are required or support multiple values
+   - Configure required/multiple values settings
    - Set display names for better readability
-5. Save your content type
-6. Export individual content types as JSON when needed
+4. Use queue mode to batch multiple operations when needed
 
 ### Working with Components
 
@@ -111,36 +122,24 @@ This will start both the backend Express server and the frontend React applicati
 4. Configure advanced parameter settings:
    - Content paths with picker configurations
    - Dropdown selections with value options
-   - Image path settings and upload options
-5. Manage component field groups to organize parameters
-6. Save components to your Bloomreach instance
+   - Image path settings
 
-### Using Change History & Git Integration
+### Using Operation Queue
 
-1. Make your changes to content types and components
-2. Review the Change History section to see all modifications
-3. Click on any change to view detailed information including before/after states
-4. When ready to update your Git repository:
-   - Click "Download Files" in the Change History section
-   - Review the list of created, updated, and deleted files
-   - Download the ZIP file containing:
-     - All modified content type and component files
-     - A manifest.md file listing all changes
-     - An apply-changes.sh script for automated Git updates
-5. Apply changes to your Git repository:
-   - Either use the provided script: `./apply-changes.sh`
-   - Or manually add, update, and remove files as listed in the manifest
-6. Commit changes to your repository
+1. Toggle "Queue Mode" to start batching operations
+2. Make your changes to content types or components
+3. Review queued operations in the queue panel
+4. Execute all operations at once when ready
+5. View success/error status for each operation
 
-## Configuration
+### Managing Change History
 
-### Environment Variables
-
-No additional configuration is required. The application uses environment variables for configuration in production.
-
-### React Client Configuration
-
-The React client is configured with Vite and can be customized by editing the `client/vite.config.ts` file.
+1. Track all modifications in the Change History panel
+2. Review detailed information including before/after states
+3. Export changes in various formats:
+   - Download modified files as a ZIP archive
+   - Generate Git patch files
+   - Export change history as JSON
 
 ## Project Structure
 
@@ -156,37 +155,13 @@ The React client is configured with Vite and can be customized by editing the `c
 │   │   │   ├── ComponentManager.tsx
 │   │   │   ├── ComponentEditor.tsx
 │   │   │   ├── ChangeHistory.tsx
+│   │   │   ├── OperationQueue.tsx
 │   │   │   └── ...
+│   │   ├── contexts/         # React contexts
+│   │   │   └── ApiContext.tsx # API and queue management
 │   │   ├── types/            # TypeScript interfaces
 │   │   ├── hooks/            # React hooks
 │   │   └── lib/              # Utility functions
-```
-
-## Development
-
-### Running in Development Mode
-
-```bash
-npm run dev
-```
-
-### Building for Production
-
-```bash
-npm run build
-```
-
-This will create a production build of the React frontend in the `client/build` directory and prepare the application for deployment.
-
-## Deployment
-
-The application can be deployed to any hosting service that supports Node.js applications, such as Heroku, Netlify, or Vercel.
-
-### Heroku Deployment
-
-```bash
-heroku create
-git push heroku main
 ```
 
 ## Technical Details
@@ -208,6 +183,16 @@ git push heroku main
 - **Sonner**: Toast notifications
 - **JSZip**: Creating ZIP files for download
 - **FileSaver**: Downloading generated files
+- **UUID**: Generating unique IDs for operations
+
+## API Context and Operation Queue
+
+The application uses a React context (`ApiContext`) to manage API interactions and the operation queue. This provides:
+
+- Consistent authentication across all API requests
+- Ability to toggle between immediate and queued operation modes
+- Smart consolidation of operations to avoid version conflicts
+- Comprehensive tracking of changes for history and export
 
 ## License
 
