@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { ContentType, ContentTypeEditorProps, Property } from "../types";
+import FilterInput from "./FilterInput";
 
 const ContentTypeEditor: React.FC<ContentTypeEditorProps> = ({
   contentType,
@@ -56,6 +57,9 @@ const ContentTypeEditor: React.FC<ContentTypeEditorProps> = ({
 
   // Flag to track if we're editing an existing property
   const [editingPropertyIndex, setEditingPropertyIndex] = useState<number>(-1);
+
+  // Add property filter state
+  const [propertyFilter, setPropertyFilter] = useState<string>("");
 
   // Load content type data if editing an existing one
   useEffect(() => {
@@ -120,6 +124,23 @@ const ContentTypeEditor: React.FC<ContentTypeEditorProps> = ({
       [name]: checked,
     }));
   };
+
+  // Handle property filter change
+  const handlePropertyFilterChange = (value: string) => {
+    setPropertyFilter(value);
+  };
+
+  // Filter properties
+  const filteredProperties = formData.properties.filter((property) => {
+    if (!propertyFilter) return true;
+
+    const searchTerm = propertyFilter.toLowerCase();
+    return (
+      property.name.toLowerCase().includes(searchTerm) ||
+      (property.displayName || "").toLowerCase().includes(searchTerm) ||
+      property.type.toLowerCase().includes(searchTerm)
+    );
+  });
 
   // Add a new property to the content type
   const addProperty = () => {
@@ -343,89 +364,130 @@ const ContentTypeEditor: React.FC<ContentTypeEditorProps> = ({
             {formData.properties.length === 0 ? (
               <div className="py-12 text-center bg-muted/50 rounded-lg">
                 <p className="text-muted-foreground">
-                  No properties defined yet. Add some below.
+                  No fields defined yet. Add some below.
                 </p>
               </div>
             ) : (
-              <div className="border rounded-lg overflow-hidden">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Display Name</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Required</TableHead>
-                      <TableHead>Multiple</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {formData.properties.map((property, index) => (
-                      <TableRow
-                        key={index}
-                        className="cursor-pointer hover:bg-muted/50"
-                        onClick={() => editProperty(index)}
-                      >
-                        <TableCell className="font-medium">
-                          {property.name}
-                        </TableCell>
-                        <TableCell>{property.displayName || "-"}</TableCell>
-                        <TableCell>{property.type}</TableCell>
-                        <TableCell>
-                          {property.required ? "Yes" : "No"}
-                        </TableCell>
-                        <TableCell>
-                          {property.multiple ? "Yes" : "No"}
-                        </TableCell>
-                        <TableCell onClick={(e) => e.stopPropagation()}>
-                          <div className="flex justify-end space-x-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => movePropertyUp(index)}
-                              disabled={index === 0}
-                              title="Move Up"
-                              type="button"
-                            >
-                              <ArrowUp className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => movePropertyDown(index)}
-                              disabled={
-                                index === formData.properties.length - 1
-                              }
-                              title="Move Down"
-                              type="button"
-                            >
-                              <ArrowDown className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
+              <>
+                {/* Add filter input for properties */}
+                <div className="mb-4">
+                  <FilterInput
+                    placeholder="Filter fields..."
+                    onFilterChange={handlePropertyFilterChange}
+                  />
+                </div>
+
+                {filteredProperties.length === 0 ? (
+                  <div className="py-8 text-center bg-muted/50 rounded-lg">
+                    <p className="text-muted-foreground mb-2">
+                      No fields match your filter.
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPropertyFilter("")}
+                    >
+                      Clear filter
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="border rounded-lg overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Display Name</TableHead>
+                          <TableHead>Type</TableHead>
+                          <TableHead>Required</TableHead>
+                          <TableHead>Multiple</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredProperties.map((property, index) => {
+                          // Find original index in the unfiltered array
+                          const originalIndex = formData.properties.findIndex(
+                            (p) => p.name === property.name
+                          );
+
+                          return (
+                            <TableRow
+                              key={index}
+                              className="cursor-pointer hover:bg-muted/50"
                               onClick={() => editProperty(index)}
-                              title="Edit"
-                              type="button"
                             >
-                              <Edit2 className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => deleteProperty(index)}
-                              title="Delete"
-                              type="button"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                              <TableCell className="font-medium">
+                                {property.name}
+                              </TableCell>
+                              <TableCell>
+                                {property.displayName || "-"}
+                              </TableCell>
+                              <TableCell>{property.type}</TableCell>
+                              <TableCell>
+                                {property.required ? "Yes" : "No"}
+                              </TableCell>
+                              <TableCell>
+                                {property.multiple ? "Yes" : "No"}
+                              </TableCell>
+                              <TableCell onClick={(e) => e.stopPropagation()}>
+                                <div className="flex justify-end space-x-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() =>
+                                      movePropertyUp(originalIndex)
+                                    }
+                                    disabled={originalIndex === 0}
+                                    title="Move Up"
+                                    type="button"
+                                  >
+                                    <ArrowUp className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() =>
+                                      movePropertyDown(originalIndex)
+                                    }
+                                    disabled={
+                                      originalIndex ===
+                                      formData.properties.length - 1
+                                    }
+                                    title="Move Down"
+                                    type="button"
+                                  >
+                                    <ArrowDown className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => editProperty(originalIndex)}
+                                    title="Edit"
+                                    type="button"
+                                  >
+                                    <Edit2 className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() =>
+                                      deleteProperty(originalIndex)
+                                    }
+                                    title="Delete"
+                                    type="button"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </>
             )}
           </div>
 

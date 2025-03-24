@@ -34,10 +34,11 @@ import { toast } from "sonner";
 import { useApi } from "../contexts/ApiContext";
 import { ApiRequest, Component, ComponentGroup } from "../types";
 import ComponentEditor from "./ComponentEditor";
+import FilterInput from "./FilterInput";
 
 const ComponentManager: React.FC = () => {
   const { queueOperation, executeOperation } = useApi();
-  
+
   const [componentGroups, setComponentGroups] = useState<ComponentGroup[]>([]);
   const [components, setComponents] = useState<Component[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -56,6 +57,10 @@ const ComponentManager: React.FC = () => {
     system: false,
   });
 
+  // Add filter states
+  const [componentFilter, setComponentFilter] = useState<string>("");
+  const [groupFilter, setGroupFilter] = useState<string>("");
+
   // Fetch component groups when ACTIVE channel ID changes
   useEffect(() => {
     if (activeChannelId) {
@@ -71,6 +76,36 @@ const ComponentManager: React.FC = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentGroup]);
+
+  // Filter component groups
+  const filteredComponentGroups = componentGroups.filter((group) => {
+    if (!groupFilter) return true;
+
+    const searchTerm = groupFilter.toLowerCase();
+    return group.name.toLowerCase().includes(searchTerm);
+  });
+
+  // Filter components
+  const filteredComponents = components.filter((component) => {
+    if (!componentFilter) return true;
+
+    const searchTerm = componentFilter.toLowerCase();
+    const componentName = component.id.split("/")[1];
+    return (
+      componentName.toLowerCase().includes(searchTerm) ||
+      (component.label || "").toLowerCase().includes(searchTerm) ||
+      (component.ctype || "").toLowerCase().includes(searchTerm)
+    );
+  });
+
+  // Handle filter changes
+  const handleComponentFilterChange = (value: string) => {
+    setComponentFilter(value);
+  };
+
+  const handleGroupFilterChange = (value: string) => {
+    setGroupFilter(value);
+  };
 
   // Fetch component groups from API
   const fetchComponentGroups = async () => {
@@ -192,7 +227,11 @@ const ComponentManager: React.FC = () => {
       );
 
       if (result.success) {
-        toast.success(`Component ${result.queued ? 'queued for deletion' : 'deleted successfully'}`);
+        toast.success(
+          `Component ${
+            result.queued ? "queued for deletion" : "deleted successfully"
+          }`
+        );
         if (!result.queued) {
           fetchComponents();
         }
@@ -246,7 +285,7 @@ const ComponentManager: React.FC = () => {
 
       if (result.success) {
         toast.success(
-          `Component ${result.queued ? 'queued to be' : ''} ${
+          `Component ${result.queued ? "queued to be" : ""} ${
             operation === "createComponent" ? "created" : "updated"
           } successfully`
         );
@@ -295,10 +334,14 @@ const ComponentManager: React.FC = () => {
       );
 
       if (result.success) {
-        toast.success(`Component group ${result.queued ? 'queued for creation' : 'created successfully'}`);
+        toast.success(
+          `Component group ${
+            result.queued ? "queued for creation" : "created successfully"
+          }`
+        );
         setShowGroupForm(false);
         setNewGroup({ name: "", hidden: false, system: false });
-        
+
         if (!result.queued) {
           fetchComponentGroups();
           setCurrentGroup(newGroup.name);
@@ -343,7 +386,11 @@ const ComponentManager: React.FC = () => {
       );
 
       if (result.success) {
-        toast.success(`Component group ${result.queued ? 'queued for deletion' : 'deleted successfully'}`);
+        toast.success(
+          `Component group ${
+            result.queued ? "queued for deletion" : "deleted successfully"
+          }`
+        );
 
         // If we deleted the current group, reset it
         if (currentGroup === groupName && !result.queued) {
@@ -604,6 +651,15 @@ const ComponentManager: React.FC = () => {
                       Component Groups
                     </CardTitle>
                   </CardHeader>
+
+                  {/* Add filter for component groups */}
+                  <div className="px-3 pb-3">
+                    <FilterInput
+                      placeholder="Filter groups..."
+                      onFilterChange={handleGroupFilterChange}
+                    />
+                  </div>
+
                   <div className="overflow-y-auto max-h-[calc(100vh-220px)]">
                     {componentGroups.length === 0 ? (
                       <div className="p-6 text-center">
@@ -618,9 +674,22 @@ const ComponentManager: React.FC = () => {
                           Create your first group
                         </Button>
                       </div>
+                    ) : filteredComponentGroups.length === 0 ? (
+                      <div className="p-6 text-center">
+                        <p className="text-muted-foreground text-sm mb-4">
+                          No groups match your filter.
+                        </p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setGroupFilter("")}
+                        >
+                          Clear filter
+                        </Button>
+                      </div>
                     ) : (
                       <div className="divide-y">
-                        {componentGroups.map((group) => (
+                        {filteredComponentGroups.map((group) => (
                           <div
                             key={group.name}
                             className={`flex items-center justify-between p-3 ${
@@ -704,95 +773,119 @@ const ComponentManager: React.FC = () => {
                         </CardTitle>
                       </CardHeader>
                       <CardContent className="p-0">
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Name</TableHead>
-                              <TableHead>Label</TableHead>
-                              <TableHead>Type</TableHead>
-                              <TableHead>Hidden</TableHead>
-                              <TableHead className="text-right">
-                                Actions
-                              </TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {components.map((component) => {
-                              const componentName = component.id.split("/")[1];
-                              return (
-                                <TableRow
-                                  key={component.id}
-                                  className="cursor-pointer hover:bg-muted/50"
-                                  onClick={() =>
-                                    getComponentDetails(componentName)
-                                  }
-                                >
-                                  <TableCell className="font-medium">
-                                    {componentName}
-                                  </TableCell>
-                                  <TableCell>
-                                    {component.label || "-"}
-                                  </TableCell>
-                                  <TableCell>
-                                    {component.ctype || "-"}
-                                  </TableCell>
-                                  <TableCell>
-                                    {component.hidden ? (
-                                      <CheckCircle2 className="h-4 w-4 text-primary" />
-                                    ) : (
-                                      <X className="h-4 w-4 text-muted-foreground" />
-                                    )}
-                                  </TableCell>
-                                  <TableCell
-                                    className="text-right"
-                                    onClick={(e) => e.stopPropagation()}
+                        {/* Add filter for components */}
+                        <div className="px-4 pb-4">
+                          <FilterInput
+                            placeholder="Filter components..."
+                            onFilterChange={handleComponentFilterChange}
+                          />
+                        </div>
+
+                        {filteredComponents.length === 0 ? (
+                          <div className="flex flex-col items-center justify-center py-12">
+                            <p className="text-muted-foreground mb-4">
+                              No components match your filter.
+                            </p>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setComponentFilter("")}
+                            >
+                              Clear filter
+                            </Button>
+                          </div>
+                        ) : (
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Name</TableHead>
+                                <TableHead>Label</TableHead>
+                                <TableHead>Type</TableHead>
+                                <TableHead>Hidden</TableHead>
+                                <TableHead className="text-right">
+                                  Actions
+                                </TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {filteredComponents.map((component) => {
+                                const componentName =
+                                  component.id.split("/")[1];
+                                return (
+                                  <TableRow
+                                    key={component.id}
+                                    className="cursor-pointer hover:bg-muted/50"
+                                    onClick={() =>
+                                      getComponentDetails(componentName)
+                                    }
                                   >
-                                    <div className="flex justify-end space-x-2">
-                                      <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() =>
-                                          getComponentDetails(componentName)
-                                        }
-                                        title="Edit"
-                                        className="cursor-pointer"
-                                      >
-                                        <Edit className="h-4 w-4" />
-                                      </Button>
-                                      {!component.system && (
+                                    <TableCell className="font-medium">
+                                      {componentName}
+                                    </TableCell>
+                                    <TableCell>
+                                      {component.label || "-"}
+                                    </TableCell>
+                                    <TableCell>
+                                      {component.ctype || "-"}
+                                    </TableCell>
+                                    <TableCell>
+                                      {component.hidden ? (
+                                        <CheckCircle2 className="h-4 w-4 text-primary" />
+                                      ) : (
+                                        <X className="h-4 w-4 text-muted-foreground" />
+                                      )}
+                                    </TableCell>
+                                    <TableCell
+                                      className="text-right"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <div className="flex justify-end space-x-2">
                                         <Button
                                           type="button"
                                           variant="ghost"
                                           size="icon"
                                           onClick={() =>
-                                            deleteComponent(componentName)
+                                            getComponentDetails(componentName)
                                           }
-                                          title="Delete"
+                                          title="Edit"
                                           className="cursor-pointer"
                                         >
-                                          <Trash2 className="h-4 w-4" />
+                                          <Edit className="h-4 w-4" />
                                         </Button>
-                                      )}
-                                      <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() =>
-                                          exportComponent(component)
-                                        }
-                                        title="Export"
-                                        className="cursor-pointer"
-                                      >
-                                        <Copy className="h-4 w-4" />
-                                      </Button>
-                                    </div>
-                                  </TableCell>
-                                </TableRow>
-                              );
-                            })}
-                          </TableBody>
-                        </Table>
+                                        {!component.system && (
+                                          <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() =>
+                                              deleteComponent(componentName)
+                                            }
+                                            title="Delete"
+                                            className="cursor-pointer"
+                                          >
+                                            <Trash2 className="h-4 w-4" />
+                                          </Button>
+                                        )}
+                                        <Button
+                                          type="button"
+                                          variant="ghost"
+                                          size="icon"
+                                          onClick={() =>
+                                            exportComponent(component)
+                                          }
+                                          title="Export"
+                                          className="cursor-pointer"
+                                        >
+                                          <Copy className="h-4 w-4" />
+                                        </Button>
+                                      </div>
+                                    </TableCell>
+                                  </TableRow>
+                                );
+                              })}
+                            </TableBody>
+                          </Table>
+                        )}
                       </CardContent>
                     </>
                   )}
