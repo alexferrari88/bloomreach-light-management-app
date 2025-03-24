@@ -24,7 +24,6 @@ import { toast } from "sonner";
 import { useApi } from "../contexts/ApiContext";
 import { ApiRequest, ContentType } from "../types";
 import ContentTypeEditor from "./ContentTypeEditor";
-import FilterInput from "./FilterInput";
 
 const ContentTypeManager: React.FC = () => {
   const { queueOperation, executeOperation } = useApi();
@@ -38,30 +37,12 @@ const ContentTypeManager: React.FC = () => {
   const [editingContentType, setEditingContentType] =
     useState<ContentType | null>(null);
   const [jsonExport, setJsonExport] = useState<ContentType | null>(null);
-  const [filter, setFilter] = useState<string>("");
 
   // Fetch content types when mode changes
   useEffect(() => {
     fetchContentTypes();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contentTypeMode]);
-
-  // Filter content types based on search term
-  const filteredContentTypes = contentTypes.filter((contentType) => {
-    if (!filter) return true;
-    
-    const searchTerm = filter.toLowerCase();
-    return (
-      (contentType.id || contentType.name).toLowerCase().includes(searchTerm) ||
-      (contentType.displayName || "").toLowerCase().includes(searchTerm) ||
-      (contentType.description || "").toLowerCase().includes(searchTerm)
-    );
-  });
-
-  // Handle filter change
-  const handleFilterChange = (value: string) => {
-    setFilter(value);
-  };
 
   // Fetch content types from API
   const fetchContentTypes = async () => {
@@ -341,14 +322,6 @@ const ContentTypeManager: React.FC = () => {
             </div>
           </div>
 
-          {/* Add filter input */}
-          <div className="mb-4">
-            <FilterInput
-              placeholder="Filter content types..."
-              onFilterChange={handleFilterChange}
-            />
-          </div>
-
           <Card>
             {loading ? (
               <div className="flex justify-center items-center py-12 text-muted-foreground italic">
@@ -359,13 +332,6 @@ const ContentTypeManager: React.FC = () => {
                 <p className="text-muted-foreground">No content types found.</p>
                 <Button type="button" onClick={createContentType}>
                   Create your first content type
-                </Button>
-              </div>
-            ) : filteredContentTypes.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 space-y-4">
-                <p className="text-muted-foreground">No content types match your filter.</p>
-                <Button type="button" variant="outline" onClick={() => setFilter("")}>
-                  Clear filter
                 </Button>
               </div>
             ) : (
@@ -380,7 +346,7 @@ const ContentTypeManager: React.FC = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredContentTypes.map((contentType) => (
+                    {contentTypes.map((contentType) => (
                       <TableRow
                         key={contentType.id || contentType.name}
                         className="cursor-pointer hover:bg-muted/50"
