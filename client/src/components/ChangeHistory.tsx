@@ -10,18 +10,10 @@ import {
 } from "@/components/ui/dialog";
 import { FileBadge, GitGraph, Info, Trash2, X } from "lucide-react";
 import { useState } from "react";
-import { Change } from "../types";
+import { Change, ChangeHistoryProps } from "../types";
 import ChangeDetail from "./ChangeDetail";
 
-// Updated interface without the export function
-interface UpdatedChangeHistoryProps {
-  changes: Change[];
-  onClear: () => void;
-  onDownloadModifiedFiles: () => void;
-  onDownloadGitPatch: () => void;
-}
-
-const ChangeHistory: React.FC<UpdatedChangeHistoryProps> = ({
+const ChangeHistory: React.FC<ChangeHistoryProps> = ({
   changes,
   onClear,
   onDownloadModifiedFiles,
