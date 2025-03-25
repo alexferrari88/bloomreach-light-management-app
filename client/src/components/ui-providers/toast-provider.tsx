@@ -1,5 +1,4 @@
 import { Toaster as SonnerToaster } from "sonner";
-import { useTheme } from "@/hooks/use-theme";
 
 export function Toaster() {
   // This is a simplified version - implement proper theme detection if you have dark mode
@@ -24,4 +23,3 @@ export function Toaster() {
 export const useToast = () => {
   return { theme: "light" };
 };
-

@@ -42,7 +42,7 @@ const ContentTypeEditor: React.FC<ContentTypeEditorProps> = ({
     name: "",
     displayName: "",
     description: "",
-    properties: [],
+    properties: [], // Initialize with empty array to avoid undefined
     resourceVersion: undefined,
   });
 
@@ -131,7 +131,7 @@ const ContentTypeEditor: React.FC<ContentTypeEditorProps> = ({
   };
 
   // Filter properties
-  const filteredProperties = formData.properties.filter((property) => {
+  const filteredProperties = (formData.properties || []).filter((property) => {
     if (!propertyFilter) return true;
 
     const searchTerm = propertyFilter.toLowerCase();
@@ -152,7 +152,9 @@ const ContentTypeEditor: React.FC<ContentTypeEditorProps> = ({
 
     // Check if property name is unique
     if (
-      formData.properties.some((p) => p.name === currentProperty.name) &&
+      (formData.properties || []).some(
+        (p) => p.name === currentProperty.name
+      ) &&
       editingPropertyIndex === -1
     ) {
       alert(`A property with name "${currentProperty.name}" already exists`);
@@ -161,7 +163,7 @@ const ContentTypeEditor: React.FC<ContentTypeEditorProps> = ({
 
     if (editingPropertyIndex >= 0) {
       // Update existing property
-      const updatedProperties = [...formData.properties];
+      const updatedProperties = [...(formData.properties || [])];
       updatedProperties[editingPropertyIndex] = { ...currentProperty };
 
       setFormData((prev) => ({
@@ -174,7 +176,7 @@ const ContentTypeEditor: React.FC<ContentTypeEditorProps> = ({
       // Add new property
       setFormData((prev) => ({
         ...prev,
-        properties: [...prev.properties, { ...currentProperty }],
+        properties: [...(prev.properties || []), { ...currentProperty }],
       }));
     }
 
@@ -190,25 +192,30 @@ const ContentTypeEditor: React.FC<ContentTypeEditorProps> = ({
 
   // Edit an existing property
   const editProperty = (index: number) => {
-    setCurrentProperty(formData.properties[index]);
-    setEditingPropertyIndex(index);
-    // Use setTimeout to ensure the UI updates first
-    setTimeout(() => {
-      // Get element by ID (more reliable than ref for components)
-      const editorElement = document.getElementById("property-editor-section");
-      if (editorElement) {
-        // Scroll the element into view
-        editorElement.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-        });
-      }
-    }, 150);
+    const properties = formData.properties || [];
+    if (index >= 0 && index < properties.length) {
+      setCurrentProperty(properties[index]);
+      setEditingPropertyIndex(index);
+      // Use setTimeout to ensure the UI updates first
+      setTimeout(() => {
+        // Get element by ID (more reliable than ref for components)
+        const editorElement = document.getElementById(
+          "property-editor-section"
+        );
+        if (editorElement) {
+          // Scroll the element into view
+          editorElement.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+          });
+        }
+      }, 150);
+    }
   };
 
   // Delete a property
   const deleteProperty = (index: number) => {
-    const updatedProperties = [...formData.properties];
+    const updatedProperties = [...(formData.properties || [])];
     updatedProperties.splice(index, 1);
 
     setFormData((prev) => ({
@@ -221,7 +228,7 @@ const ContentTypeEditor: React.FC<ContentTypeEditorProps> = ({
   const movePropertyUp = (index: number) => {
     if (index === 0) return;
 
-    const updatedProperties = [...formData.properties];
+    const updatedProperties = [...(formData.properties || [])];
     const temp = updatedProperties[index];
     updatedProperties[index] = updatedProperties[index - 1];
     updatedProperties[index - 1] = temp;
@@ -234,9 +241,10 @@ const ContentTypeEditor: React.FC<ContentTypeEditorProps> = ({
 
   // Move a property down in the list
   const movePropertyDown = (index: number) => {
-    if (index === formData.properties.length - 1) return;
+    const properties = formData.properties || [];
+    if (index === properties.length - 1) return;
 
-    const updatedProperties = [...formData.properties];
+    const updatedProperties = [...properties];
     const temp = updatedProperties[index];
     updatedProperties[index] = updatedProperties[index + 1];
     updatedProperties[index + 1] = temp;
@@ -361,7 +369,7 @@ const ContentTypeEditor: React.FC<ContentTypeEditorProps> = ({
           </h3>
 
           <div className="mb-6">
-            {formData.properties.length === 0 ? (
+            {(formData.properties || []).length === 0 ? (
               <div className="py-12 text-center bg-muted/50 rounded-lg">
                 <p className="text-muted-foreground">
                   No fields defined yet. Add some below.
@@ -406,15 +414,15 @@ const ContentTypeEditor: React.FC<ContentTypeEditorProps> = ({
                       <TableBody>
                         {filteredProperties.map((property, index) => {
                           // Find original index in the unfiltered array
-                          const originalIndex = formData.properties.findIndex(
-                            (p) => p.name === property.name
-                          );
+                          const originalIndex = (
+                            formData.properties || []
+                          ).findIndex((p) => p.name === property.name);
 
                           return (
                             <TableRow
                               key={index}
                               className="cursor-pointer hover:bg-muted/50"
-                              onClick={() => editProperty(index)}
+                              onClick={() => editProperty(originalIndex)}
                             >
                               <TableCell className="font-medium">
                                 {property.name}
@@ -451,7 +459,7 @@ const ContentTypeEditor: React.FC<ContentTypeEditorProps> = ({
                                     }
                                     disabled={
                                       originalIndex ===
-                                      formData.properties.length - 1
+                                      (formData.properties || []).length - 1
                                     }
                                     title="Move Down"
                                     type="button"
