@@ -22,6 +22,7 @@ import {
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useApi } from "../contexts/ApiContext";
+import { copyJsonToClipboard, exportToJson } from "../lib/exportUtils";
 import { ApiRequest, ContentType } from "../types";
 import ContentTypeEditor from "./ContentTypeEditor";
 import FilterInput from "./FilterInput";
@@ -49,7 +50,7 @@ const ContentTypeManager: React.FC = () => {
   // Filter content types based on search term
   const filteredContentTypes = contentTypes.filter((contentType) => {
     if (!filter) return true;
-    
+
     const searchTerm = filter.toLowerCase();
     return (
       (contentType.id || contentType.name).toLowerCase().includes(searchTerm) ||
@@ -254,33 +255,14 @@ const ContentTypeManager: React.FC = () => {
   // Copy JSON to clipboard
   const copyToClipboard = () => {
     if (!jsonExport) return;
-
-    navigator.clipboard
-      .writeText(JSON.stringify(jsonExport, null, 2))
-      .then(() => {
-        toast.success("Copied to clipboard");
-      })
-      .catch(() => {
-        toast.error("Failed to copy to clipboard");
-      });
+    copyJsonToClipboard(jsonExport);
   };
 
   // Download JSON file
   const downloadJson = () => {
     if (!jsonExport) return;
-
-    const dataStr =
-      "data:text/json;charset=utf-8," +
-      encodeURIComponent(JSON.stringify(jsonExport, null, 2));
-    const downloadAnchorNode = document.createElement("a");
-    downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute(
-      "download",
-      `${jsonExport.name || "content-type"}.json`
-    );
-    document.body.appendChild(downloadAnchorNode);
-    downloadAnchorNode.click();
-    downloadAnchorNode.remove();
+    const fileName = jsonExport.name || "content-type";
+    exportToJson(jsonExport, fileName);
   };
 
   return (
@@ -363,8 +345,14 @@ const ContentTypeManager: React.FC = () => {
               </div>
             ) : filteredContentTypes.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 space-y-4">
-                <p className="text-muted-foreground">No content types match your filter.</p>
-                <Button type="button" variant="outline" onClick={() => setFilter("")}>
+                <p className="text-muted-foreground">
+                  No content types match your filter.
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setFilter("")}
+                >
                   Clear filter
                 </Button>
               </div>
