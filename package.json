@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "App for managing Bloomreach CMS content types and components",
   "main": "dist/server.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "start": "node dist/server.js",
     "build": "tsc",
@@ -11,9 +14,9 @@
     "client-install": "cd client && npm install",
     "client-build": "cd client && npm run build",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
-    "heroku-postbuild": "npm run client-install && npm run client-build && npm run build"
+    "postinstall": "npm run client-install && npm run client-build && npm run build"
   },
-  "author": "",
+  "author": "Alex Ferrari",
   "license": "MIT",
   "dependencies": {
     "axios": "^0.27.2",

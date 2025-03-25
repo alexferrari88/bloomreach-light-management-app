@@ -70,12 +70,12 @@ A modern web application for managing Bloomreach CMS content types and component
 - Node.js 18+ and npm
 - Git (optional, for version control)
 
-### Setup
+### Local Development Setup
 
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/yourusername/bloomreach-management-app.git
+git clone https://github.com/alexferrari88/bloomreach-management-app.git
 cd bloomreach-management-app
 ```
 
@@ -83,9 +83,6 @@ cd bloomreach-management-app
 
 ```bash
 npm install
-cd client
-npm install
-cd ..
 ```
 
 3. Start the development server:
@@ -100,7 +97,9 @@ This will start both the backend Express server (port 3001) and the frontend Rea
 
 ### Getting Started
 
-1. Access the application at http://localhost:3000
+1. Access the application in your web browser
+   - Local development: http://localhost:3000
+   - Deployed: Your Render.com or Railway.com URL
 2. Enter your Bloomreach host URL and authentication token
 3. Select the section you want to work with (Content Types or Components)
 
@@ -193,6 +192,13 @@ The application uses a React context (`ApiContext`) to manage API interactions a
 - Ability to toggle between immediate and queued operation modes
 - Smart consolidation of operations to avoid version conflicts
 - Comprehensive tracking of changes for history and export
+
+## Environment Variables
+
+While not strictly required for development, you can use the following environment variables in production:
+
+- `NODE_ENV`: Set to `production` for production builds
+- `PORT`: Port for the Express server (defaults to 3001 if not specified)
 
 ## License
 
