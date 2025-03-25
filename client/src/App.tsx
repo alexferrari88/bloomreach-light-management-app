@@ -15,6 +15,14 @@ import OperationQueue from "./components/OperationQueue";
 import { ApiProvider } from "./contexts/ApiContext";
 import { Auth, Change } from "./types";
 
+interface DiffHunk {
+  oldStart: number;
+  oldCount: number;
+  newStart: number;
+  newCount: number;
+  lines: string[];
+}
+
 function App() {
   // State for authentication
   const [auth, setAuth] = useState<Auth>({
@@ -111,7 +119,7 @@ function App() {
     const newLines = newStr.split("\n");
 
     // Find matching lines
-    const hunks = [];
+    const hunks: DiffHunk[] = [];
 
     // Simple LCS (Longest Common Subsequence) implementation
     function findLCS() {
@@ -133,7 +141,7 @@ function App() {
       // Backtrack to find the sequence
       let i = oldLines.length;
       let j = newLines.length;
-      const lcs = [];
+      const lcs: { oldIndex: number; newIndex: number; line: string }[] = [];
 
       while (i > 0 && j > 0) {
         if (oldLines[i - 1] === newLines[j - 1]) {
@@ -162,7 +170,7 @@ function App() {
     let newIndex = 0;
 
     // Build hunks of changes
-    let currentHunk = null;
+    let currentHunk: DiffHunk | null = null;
 
     for (const match of lcs) {
       // Process deletions
@@ -173,7 +181,7 @@ function App() {
             oldCount: 0,
             newStart: Math.max(0, newIndex - context),
             newCount: 0,
-            lines: [],
+            lines: [] as string[],
           };
 
           // Add context lines before
@@ -197,7 +205,7 @@ function App() {
             oldCount: 0,
             newStart: Math.max(0, newIndex - context),
             newCount: 0,
-            lines: [],
+            lines: [] as string[],
           };
 
           // Add context lines before
@@ -251,7 +259,7 @@ function App() {
           oldCount: 0,
           newStart: Math.max(0, newIndex - context),
           newCount: 0,
-          lines: [],
+          lines: [] as string[],
         };
 
         // Add context lines before
@@ -275,7 +283,7 @@ function App() {
           oldCount: 0,
           newStart: Math.max(0, newIndex - context),
           newCount: 0,
-          lines: [],
+          lines: [] as string[],
         };
 
         // Add context lines before

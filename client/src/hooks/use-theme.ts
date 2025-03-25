@@ -3,7 +3,7 @@
 export function useTheme() {
   return {
     theme: "light",
-    setTheme: (theme: string) => {},
-    resolvedTheme: "light"
+    setTheme: (_theme: string) => {},
+    resolvedTheme: "light",
   };
 }

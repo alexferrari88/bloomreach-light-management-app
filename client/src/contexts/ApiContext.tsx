@@ -292,7 +292,7 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({
     // Step 2: For each group, consolidate operations
     const consolidatedOperations: QueuedOperation[] = [];
 
-    for (const [entityKey, ops] of operationGroups.entries()) {
+    for (const [_entityKey, ops] of operationGroups.entries()) {
       // If there's only one operation for this entity, no need to consolidate
       if (ops.length === 1) {
         consolidatedOperations.push(ops[0]);
