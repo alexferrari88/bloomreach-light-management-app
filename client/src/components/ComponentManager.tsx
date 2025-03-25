@@ -32,6 +32,7 @@ import {
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useApi } from "../contexts/ApiContext";
+import { copyJsonToClipboard, exportToJson } from "../lib/exportUtils";
 import { ApiRequest, Component, ComponentGroup } from "../types";
 import ComponentEditor from "./ComponentEditor";
 import FilterInput from "./FilterInput";
@@ -418,33 +419,15 @@ const ComponentManager: React.FC = () => {
   // Copy JSON to clipboard
   const copyToClipboard = () => {
     if (!jsonExport) return;
-
-    navigator.clipboard
-      .writeText(JSON.stringify(jsonExport, null, 2))
-      .then(() => {
-        toast.success("Copied to clipboard");
-      })
-      .catch(() => {
-        toast.error("Failed to copy to clipboard");
-      });
+    copyJsonToClipboard(jsonExport);
   };
 
   // Download JSON file
   const downloadJson = () => {
     if (!jsonExport) return;
-
-    const dataStr =
-      "data:text/json;charset=utf-8," +
-      encodeURIComponent(JSON.stringify(jsonExport, null, 2));
-    const downloadAnchorNode = document.createElement("a");
-    downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute(
-      "download",
-      `${jsonExport.name || jsonExport.id.split("/")[1] || "component"}.json`
-    );
-    document.body.appendChild(downloadAnchorNode);
-    downloadAnchorNode.click();
-    downloadAnchorNode.remove();
+    const fileName =
+      jsonExport.name || jsonExport.id.split("/")[1] || "component";
+    exportToJson(jsonExport, fileName);
   };
 
   // Handle changes to the channel ID input
