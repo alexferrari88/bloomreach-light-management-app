@@ -14,19 +14,19 @@
     "client-install": "cd client && npm install --include=dev",
     "client-build": "cd client && npm run build",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
-    "postinstall": "npm run client-install && npm run build && npm run client-build"
+    "postinstall": "npm install --include=dev && npm run client-install && npm run build && npm run client-build"
   },
   "author": "Alex Ferrari",
   "license": "MIT",
   "dependencies": {
     "axios": "^0.27.2",
     "cors": "^2.8.5",
-    "express": "^4.21.2"
-  },
-  "devDependencies": {
+    "express": "^4.21.2",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
-    "@types/node": "^18.19.81",
+    "@types/node": "^18.19.81"
+  },
+  "devDependencies": {
     "concurrently": "^7.6.0",
     "nodemon": "^2.0.22",
     "ts-node": "^10.9.2",
