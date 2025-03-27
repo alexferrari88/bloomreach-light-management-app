@@ -2,6 +2,12 @@
 
 A modern web application for managing Bloomreach CMS content types and components through a visual interface, with comprehensive change tracking, queued operations, and Git integration.
 
+## Try It Live
+
+**[Live Demo](https://bloomreach-light-management-app.onrender.com/)**
+
+You can try a deployed version of the application at: https://bloomreach-light-management-app.onrender.com/
+
 ## Features
 
 ### Content Management Features
