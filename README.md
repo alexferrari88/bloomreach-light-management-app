@@ -13,7 +13,7 @@ A modern web application for managing Bloomreach CMS content types and component
   - Visual editor for defining content type properties
   - Property type configuration (String, Text, HTML, Boolean, Number, Date, etc.)
   - Required and multiple value settings
-- **Component Management**:
+- \*Component Management\*\*:
   - Manage component groups
   - Create, read, update, and delete components
   - Visual editor for component parameters and field groups
@@ -67,138 +67,199 @@ A modern web application for managing Bloomreach CMS content types and component
 
 ### Prerequisites
 
-- Node.js 18+ and npm
+- Node.js **v20.x** (LTS recommended, as specified in `package.json` engines) and npm
 - Git (optional, for version control)
 
 ### Local Development Setup
 
 1. Clone the repository:
 
+   ```bash
+   git clone https://github.com/alexferrari88/bloomreach-management-app.git
+   cd bloomreach-management-app
+   ```
+
+2. Install root dependencies (includes server dependencies and development tools):
+
+   ```bash
+   npm install
+   ```
+
+   _(Note: Client dependencies are installed automatically during the development or build process)._
+
+3. Start the development servers:
+
+   ```bash
+   npm run dev
+   ```
+
+   This command concurrently starts:
+
+   - The backend Express server (API proxy) using `ts-node` with hot-reloading via `nodemon` (typically on port 3001).
+   - The frontend React application using the Vite development server with hot-reloading (typically on port 3000). The Vite dev server proxies API requests (`/api`) to the backend server.
+
+   Access the application at `http://localhost:3000`.
+
+### Production Build (Local)
+
+To create a production-ready build locally:
+
 ```bash
-git clone https://github.com/alexferrari88/bloomreach-management-app.git
-cd bloomreach-management-app
+npm run build
 ```
 
-2. Install dependencies for both server and client:
+This command will:
+
+1. Install client dependencies (`npm run install:client`).
+2. Create an optimized static build of the React client application in `client/dist/` (`npm run build:client`).
+3. Compile the backend TypeScript server code into JavaScript in `dist/` (`npm run build:server`).
+
+You can then run the production server using:
 
 ```bash
-npm install
+npm start
 ```
 
-3. Start the development server:
+This runs `node dist/server.js`. The Express server will serve the static client files from `client/dist` and handle API requests.
 
-```bash
-npm run dev
-```
+## Deployment (e.g., Render, Railway)
 
-This will start both the backend Express server (port 3001) and the frontend React application (port 3000).
+1. **Repository:** Ensure your code is pushed to a Git repository (e.g., GitHub).
+2. **Platform Setup:** Connect your Git repository to the deployment platform (Render, Railway, etc.).
+3. **Build Command:** Set the build command to:
+
+   ```bash
+   npm install && npm run build
+   ```
+
+   _(This installs all dependencies and runs the full client and server build process)._
+
+4. **Start Command:** Set the start command to:
+
+   ```bash
+   npm start
+   ```
+
+   _(This runs the compiled production server)._
+
+5. **Node Version:** Ensure the platform uses Node.js version **20.x**, matching the `engines` field in `package.json`. Most platforms allow specifying the Node version.
+6. **Environment Variables:** Set `NODE_ENV` to `production`. The server uses this to determine whether to serve static client files.
 
 ## Usage
 
 ### Getting Started
 
 1. Access the application in your web browser
-   - Local development: http://localhost:3000
-   - Deployed: Your Render.com or Railway.com URL
-2. Enter your Bloomreach host URL and authentication token
-3. Select the section you want to work with (Content Types or Components)
+   - Local development: `http://localhost:3000`
+   - Deployed: Your deployment platform URL (e.g., `https://your-app.onrender.com`)
+2. Enter your Bloomreach host URL and authentication token.
+3. Select the section you want to work with (Content Types or Components).
 
 ### Working with Content Types
 
-1. Choose between Core and Development mode
-2. Browse existing content types or create new ones
+1. Choose between Core and Development mode.
+2. Browse existing content types or create new ones.
 3. Define properties for your content types:
-   - Add String, Text, HTML, Boolean, Number, Date fields
-   - Configure required/multiple values settings
-   - Set display names for better readability
-4. Use queue mode to batch multiple operations when needed
+   - Add String, Text, HTML, Boolean, Number, Date fields.
+   - Configure required/multiple values settings.
+   - Set display names for better readability.
+4. Use queue mode to batch multiple operations when needed.
 
 ### Working with Components
 
-1. Enter your channel ID
-2. Select or create a component group
-3. Create new components with parameters and field groups
+1. Enter your channel ID.
+2. Select or create a component group.
+3. Create new components with parameters and field groups.
 4. Configure advanced parameter settings:
-   - Content paths with picker configurations
-   - Dropdown selections with value options
-   - Image path settings
+   - Content paths with picker configurations.
+   - Dropdown selections with value options.
+   - Image path settings.
 
 ### Using Operation Queue
 
-1. Toggle "Queue Mode" to start batching operations
-2. Make your changes to content types or components
-3. Review queued operations in the queue panel
-4. Execute all operations at once when ready
-5. View success/error status for each operation
+1. Toggle "Queue Mode" to start batching operations.
+2. Make your changes to content types or components.
+3. Review queued operations in the queue panel.
+4. Execute all operations at once when ready.
+5. View success/error status for each operation.
 
 ### Managing Change History
 
-1. Track all modifications in the Change History panel
-2. Review detailed information including before/after states
+1. Track all modifications in the Change History panel.
+2. Review detailed information including before/after states.
 3. Export changes in various formats:
-   - Download modified files as a ZIP archive
-   - Generate Git patch files
-   - Export change history as JSON
+   - Download modified files as a ZIP archive.
+   - Generate Git patch files.
+   - Export change history as JSON.
 
 ## Project Structure
 
-```
+```markdown
 .
-├── server.ts                 # Express server for API proxy
-├── client/                   # React frontend
-│   ├── src/
-│   │   ├── App.tsx           # Main application component
-│   │   ├── components/       # React components
-│   │   │   ├── ContentTypeManager.tsx
-│   │   │   ├── ContentTypeEditor.tsx
-│   │   │   ├── ComponentManager.tsx
-│   │   │   ├── ComponentEditor.tsx
-│   │   │   ├── ChangeHistory.tsx
-│   │   │   ├── OperationQueue.tsx
-│   │   │   └── ...
-│   │   ├── contexts/         # React contexts
-│   │   │   └── ApiContext.tsx # API and queue management
-│   │   ├── types/            # TypeScript interfaces
-│   │   ├── hooks/            # React hooks
-│   │   └── lib/              # Utility functions
+├── server.ts # Express server: API proxy & serves client build in prod
+├── dist/ # Compiled server code (generated by `npm run build:server`)
+├── client/ # React frontend source code
+│ ├── dist/ # Static client build output (generated by `npm run build:client`)
+│ ├── public/
+│ ├── src/
+│ │ ├── App.tsx # Main application component
+│ │ ├── components/ # React components (UI, features)
+│ │ ├── contexts/ # React contexts (ApiContext)
+│ │ ├── types/ # TypeScript interfaces
+│ │ ├── hooks/ # React hooks
+│ │ └── lib/ # Utility functions
+│ ├── vite.config.ts # Vite configuration (dev server, proxy, build settings)
+│ └── package.json # Client dependencies and scripts
+├── tsconfig.json # TypeScript config for the server
+├── package.json # Root dependencies, build/dev scripts
+└── README.md # This file
 ```
 
 ## Technical Details
 
 ### Backend Technologies
 
-- **Express**: API proxy to handle authentication and Bloomreach API requests
-- **Axios**: HTTP client for making API requests
-- **TypeScript**: Type-safe JavaScript for the server
+- **Express**: API proxy to handle authentication and Bloomreach API requests. Serves static client build in production.
+- **Axios**: HTTP client for making API requests.
+- **TypeScript**: Type-safe JavaScript for the server.
+- **`@types/node`**: Placed in `dependencies` for better compatibility with certain build environments.
 
 ### Frontend Technologies
 
-- **React**: UI library for building the interface
-- **TypeScript**: Type-safe JavaScript
-- **Vite**: Modern build tool and development server
-- **Tailwind CSS**: Utility-first CSS framework
-- **Radix UI**: Accessible component primitives
-- **Lucide React**: Icon library
-- **Sonner**: Toast notifications
-- **JSZip**: Creating ZIP files for download
-- **FileSaver**: Downloading generated files
-- **UUID**: Generating unique IDs for operations
+- **React**: UI library for building the interface.
+- **TypeScript**: Type-safe JavaScript.
+- **Vite**: Modern build tool and development server.
+  - Handles Hot Module Replacement (HMR) during development.
+  - Bundles the client application for production (`client/dist`).
+  - The `server.proxy` setting in `vite.config.ts` is **only** used during local development to forward `/api` calls from `localhost:3000` to `localhost:3001`. It is **not** used in the production build.
+- **Tailwind CSS**: Utility-first CSS framework.
+- **Radix UI**: Accessible component primitives.
+- **Lucide React**: Icon library.
+- **Sonner**: Toast notifications.
+- **JSZip**: Creating ZIP files for download.
+- **FileSaver**: Downloading generated files.
+- **UUID**: Generating unique IDs for operations.
+
+### Server/Client Interaction (Production)
+
+- The client is built into static assets (`client/dist`).
+- The Express server (`dist/server.js`) uses `express.static` to serve these assets.
+- A catch-all route (`app.get('*', ...)`) in the server serves `client/dist/index.html` for any routes not matched by the API or static files, enabling client-side routing (SPA).
+- API calls from the client (e.g., `/api/execute`) are made relative to the origin and handled directly by the Express server running on the same service.
 
 ## API Context and Operation Queue
 
 The application uses a React context (`ApiContext`) to manage API interactions and the operation queue. This provides:
 
-- Consistent authentication across all API requests
-- Ability to toggle between immediate and queued operation modes
-- Smart consolidation of operations to avoid version conflicts
-- Comprehensive tracking of changes for history and export
+- Consistent authentication across all API requests.
+- Ability to toggle between immediate and queued operation modes.
+- Smart consolidation of operations to avoid version conflicts.
+- Comprehensive tracking of changes for history and export.
 
 ## Environment Variables
 
-While not strictly required for development, you can use the following environment variables in production:
-
-- `NODE_ENV`: Set to `production` for production builds
-- `PORT`: Port for the Express server (defaults to 3001 if not specified)
+- **`NODE_ENV`**: Set to `production` for production builds/deployments. The server uses this to enable serving static client files.
+- **`PORT`**: Port for the Express server (defaults to 3001 locally if not set, assigned automatically by platforms like Render).
 
 ## License
 
@@ -210,5 +271,8 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## Acknowledgements
 
+- My wife for her unweavering support
+- Claude 3.7 Sonnet for providing the majority of the code
+- Google Gemini 2.5 Pro for helping fixing deployment issues
 - Bloomreach CMS for their API
-- ShadCN UI for the accessible component library base
+- ShadCN UI for the awesome component library

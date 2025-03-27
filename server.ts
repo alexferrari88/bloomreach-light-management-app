@@ -23,7 +23,7 @@ const PORT = process.env.PORT || 3001;
 // Middleware
 app.use(express.json());
 app.use(cors());
-app.use(express.static(path.join(__dirname, "client/build")));
+app.use(express.static(path.join(__dirname, "..", "client", "dist")));
 
 // API proxy for Bloomreach
 app.post("/api/execute", async (req: Request, res: Response) => {
@@ -256,8 +256,9 @@ app.post("/api/execute", async (req: Request, res: Response) => {
 
 // Serve frontend in production
 if (process.env.NODE_ENV === "production") {
+  // Catch-all route to serve index.html for SPA routing
   app.get("*", (req: Request, res: Response) => {
-    res.sendFile(path.join(__dirname, "client/build", "index.html"));
+    res.sendFile(path.join(__dirname, "..", "client", "dist", "index.html"));
   });
 }
 
