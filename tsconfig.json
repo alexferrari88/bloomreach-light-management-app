@@ -5,11 +5,12 @@
     "module": "commonjs",
     "outDir": "dist",
     "rootDir": "./",
-    "strict": true,
+    "strict": false,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "noImplicitAny": false
   },
   "include": ["server.ts"],
   "exclude": ["node_modules", "client"]

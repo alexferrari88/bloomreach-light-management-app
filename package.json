@@ -4,29 +4,29 @@
   "description": "App for managing Bloomreach CMS content types and components",
   "main": "dist/server.js",
   "engines": {
-    "node": ">=18.0.0"
+    "node": "20.x"
   },
   "scripts": {
     "start": "node dist/server.js",
-    "build": "tsc",
+    "build:server": "tsc -p tsconfig.json --skipLibCheck",
+    "build:client": "cd client && npm run build",
+    "install:client": "cd client && npm install --include=dev",
+    "build": "npm run install:client && npm run build:client && npm run build:server",
     "server": "nodemon --exec ts-node server.ts",
     "client": "cd client && npm run dev",
-    "client-install": "cd client && npm install",
-    "client-build": "cd client && npm run build",
-    "dev": "concurrently \"npm run server\" \"npm run client\"",
-    "postinstall": "npm run client-install && npm run client-build && npm run build"
+    "dev": "concurrently \"npm run server\" \"npm run client\""
   },
   "author": "Alex Ferrari",
   "license": "MIT",
   "dependencies": {
     "axios": "^0.27.2",
     "cors": "^2.8.5",
-    "express": "^4.21.2"
+    "express": "^4.21.2",
+    "@types/node": "^20.14.13"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
-    "@types/node": "^18.19.81",
     "concurrently": "^7.6.0",
     "nodemon": "^2.0.22",
     "ts-node": "^10.9.2",
